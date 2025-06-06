@@ -737,7 +737,7 @@
                         loopingPathSegments.push(res.path);
                         totalLoopCost += res.cost;
                         statusHTML += `<br>\nLoop segment: <span class="highlight-loop">${fromNode.replace(/_/g, ' ')}</span> → <span class="highlight-loop">${toNode.replace(/_/g, ' ')}</span>` +
-                                      (res.path.length > 1 ? ` via [${res.path.map(p=>p.replace(/_/g, ' ')).join(' → ')}]` : '') +
+                                      (res.path.length > 1 ? ` via\n[${res.path.map(p=>p.replace(/_/g, ' ')).join(' → ')}]` : '') +
                                       ` (cost: ${res.cost}).`;
                     } else {
                         loopPossible = false;
