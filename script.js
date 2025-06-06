@@ -1,5 +1,5 @@
 const BiomeId = {
-    TOWN: "TOWN", PLAINS: "PLAINS", GRASS: "GRASSY", METROPOLIS: "METROPOLIS",
+    TOWN: "TOWN", PLAINS: "PLAINS", GRASS: "GRASS", METROPOLIS: "METROPOLIS",
     LAKE: "LAKE", TALL_GRASS: "TALL_GRASS", FOREST: "FOREST", CAVE: "CAVE",
     SLUM: "SLUM", CONSTRUCTION_SITE: "CONSTRUCTION_SITE", SWAMP: "SWAMP",
     JUNGLE: "JUNGLE", MEADOW: "MEADOW", SEA: "SEA", SEABED: "SEABED",
@@ -97,6 +97,13 @@ let previousStartNode = startBiomeSelect.value;
 
 const selectedTargetBiomes = new Set();
 const selectedAvoidBiomes = new Set();
+const selectedPokemon = new Set();
+
+const pokemonSearchInput = document.getElementById('pokemonSearch');
+const pokemonListContainer = document.getElementById('pokemonListContainer');
+const selectedPokemonIndicator = document.getElementById('selectedPokemonIndicator');
+let allPokemonData = {};
+
 
 const NODE_STYLES = {
     DEFAULT: { background: '#97C2FC', border: '#666666', fontColor: 'black', fontSize: 12, bold: false, borderWidth: 1.5 },
@@ -196,9 +203,9 @@ function updateSelectedIndicator(selectedSet, indicatorElement) {
         indicatorElement.textContent = "Nothing selected";
     } else {
         indicatorElement.innerHTML = '';
-        Array.from(selectedSet).sort().forEach(biome => {
+        Array.from(selectedSet).sort().forEach(itemName => {
             const span = document.createElement('span');
-            span.textContent = biome.replace(/_/g, ' ');
+            span.textContent = itemName.replace(/_/g, ' ');
             indicatorElement.appendChild(span);
         });
     }
@@ -768,7 +775,7 @@ async function findPathOptimal(startNode, effectiveTargetNodes, avoidNodesSet, s
         });
 
 
-        statusHTML += `<b>Optimal Path:</b> ${fullOptimalPathDisplay}<br>`;
+        statusHTML += `<b>Optimal Path:\n</b>${fullOptimalPathDisplay}<br>`;
         statusHTML += `<b>Cost:</b> ${pathCostWithoutLoop}<br><br>`;
 
         let loopPathDisplay = "N/A";
@@ -799,7 +806,7 @@ async function findPathOptimal(startNode, effectiveTargetNodes, avoidNodesSet, s
             );
         }
 
-        statusHTML += `<b>Optimal Loop Path:</b> ${loopPathDisplay}<br>`;
+        statusHTML += `<b>Optimal Loop Path:\n</b>${loopPathDisplay}<br>`;
         statusHTML += `<b>Loop Cost:</b> ${loopCostDisplay}<br><br>`;
         statusHTML += `<b>Total Optimal Cost:</b> ${bestPermutationDetails.totalCost}<br>`;
 
@@ -906,3 +913,80 @@ document.getElementById('findPathBtn').addEventListener('click', async () => {
         await findPathOptimal(startNode, effectiveTargetNodes, avoidNodesSet, statusDiv, statusHTML);
     }
 });
+
+function populatePokemonList() {
+    pokemonListContainer.innerHTML = '';
+    const pokemonNames = Object.keys(allPokemonData).sort();
+
+    pokemonNames.forEach(pokemonName => {
+        const item = document.createElement('div');
+        item.classList.add('multi-select-item');
+        item.textContent = pokemonName.replace(/_/g, ' '); 
+        item.dataset.pokemonName = pokemonName;
+
+        if (selectedPokemon.has(pokemonName)) {
+            item.classList.add('selected');
+        }
+
+        item.addEventListener('click', () => {
+            if (selectedPokemon.has(pokemonName)) {
+                selectedPokemon.delete(pokemonName);
+                item.classList.remove('selected');
+            } else {
+                selectedPokemon.add(pokemonName);
+                item.classList.add('selected');
+            }
+            updateSelectedIndicator(selectedPokemon, selectedPokemonIndicator);
+        });
+        pokemonListContainer.appendChild(item);
+    });
+}
+
+function handlePokemonSearch() {
+    const searchTerm = pokemonSearchInput.value.toLowerCase().trim();
+    const items = pokemonListContainer.getElementsByClassName('multi-select-item');
+
+    for (const item of items) {
+        const pokemonNameRaw = item.dataset.pokemonName;
+        const pokemonNameDisplay = pokemonNameRaw.replace(/_/g, ' ');
+        const pokemonNameDisplayLower = pokemonNameDisplay.toLowerCase();
+        
+        if (searchTerm === '') {
+            item.style.display = '';
+            item.innerHTML = pokemonNameDisplay;
+            continue;
+        }
+        
+        const index = pokemonNameDisplayLower.indexOf(searchTerm);
+        if (index > -1) {
+            item.style.display = '';
+            const matchEndIndex = index + searchTerm.length;
+            const highlightedHTML = pokemonNameDisplay.substring(0, index) +
+                                  '<b>' + pokemonNameDisplay.substring(index, matchEndIndex) + '</b>' +
+                                  pokemonNameDisplay.substring(matchEndIndex);
+            item.innerHTML = highlightedHTML;
+        } else {
+            item.style.display = 'none';
+        }
+    }
+}
+
+async function initializePokemonFeature() {
+    try {
+        const response = await fetch('pokemon_spawn.json');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        allPokemonData = await response.json();
+        
+        populatePokemonList();
+        pokemonSearchInput.addEventListener('input', handlePokemonSearch);
+        updateSelectedIndicator(selectedPokemon, selectedPokemonIndicator);
+
+    } catch (error) {
+        console.error("Could not load Pokémon data:", error);
+        pokemonListContainer.innerHTML = 'Error loading Pokémon list.';
+    }
+}
+
+initializePokemonFeature();

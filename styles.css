@@ -53,13 +53,17 @@ label {
     color: #333;
 }
 
-select, button#findPathBtn {
+select, button#findPathBtn, input[type="search"] {
     width: 100%;
     padding: 10px;
     border-radius: 4px;
     border: 1px solid #ccc;
     box-sizing: border-box;
     font-size: 16px;
+}
+
+input[type="search"] {
+    margin-bottom: 5px;
 }
 
 button#findPathBtn {
