@@ -63,19 +63,21 @@ for (const sourceBiome in biomeLinksRaw) {
     if (!graph.has(sourceBiome)) graph.set(sourceBiome, []);
     let destinations = biomeLinksRaw[sourceBiome];
     if (!Array.isArray(destinations)) {
-        destinations = [destinations];
+        destinations = [destinations]; 
     }
 
-    destinations.forEach(dest => {
+    destinations.forEach(destEntry => {
         let targetBiome;
-        const weight = 1;
-        if (Array.isArray(dest)) {
-            targetBiome = dest[0];
-        } else {
-            targetBiome = dest;
+        let weight = 1; 
+
+        if (Array.isArray(destEntry)) { 
+            targetBiome = destEntry[0];
+        } else { 
+            targetBiome = destEntry;
         }
+
         if (allBiomes.has(targetBiome)) {
-                graph.get(sourceBiome).push({ to: targetBiome, weight: weight });
+            graph.get(sourceBiome).push({ to: targetBiome, weight: weight });
         } else {
             console.warn(`Unknown biome referenced: ${targetBiome} from ${sourceBiome}`);
         }
@@ -103,6 +105,7 @@ const NODE_STYLES = {
     AVOID: { background: '#e0e0e0', border: '#757575', fontColor: '#757575', fontSize: 10, bold: false, borderWidth: 1.5 },
     PATH_ANIMATION: { background: '#79B6FF', border: 'black', borderWidth: 3 },
     LOOP_ANIMATION: { background: '#ed3545', border: 'black', borderWidth: 3 },
+    INTERMEDIATE_NODE_TEXT: { color: 'black', fontWeight: 'normal' }
 };
 
 function applyNodeStyle(nodeId, style) {
@@ -122,7 +125,7 @@ function getNodeStyleDefinition(nodeId) {
     const isAvoid = selectedAvoidBiomes.has(nodeId);
 
     if (isStart) return NODE_STYLES.START;
-    if (isAvoid) return NODE_STYLES.AVOID;
+    if (isAvoid) return NODE_STYLES.AVOID; 
     if (isTarget) return NODE_STYLES.TARGET;
     return NODE_STYLES.DEFAULT;
 }
@@ -172,7 +175,7 @@ function createMultiSelectItems(containerId, selectedSet, indicatorId) {
                 updateSelectedIndicator(selectedTargetBiomes, document.getElementById('selectedTargetsIndicator'));
                 updateNodeAppearance(biomeValue); 
             }
-                if (containerId === 'targetBiomesContainer' && selectedAvoidBiomes.has(biomeValue)) {
+            if (containerId === 'targetBiomesContainer' && selectedAvoidBiomes.has(biomeValue)) {
                 selectedAvoidBiomes.delete(biomeValue);
                 const avoidItems = document.querySelectorAll('#avoidBiomesContainer .multi-select-item');
                 avoidItems.forEach(aItem => {
@@ -254,8 +257,7 @@ function dijkstra(startNode, endNode, avoidNodes = new Set()) {
         for(const item of pq) if(item[1] === u && item[0] === minDist) toRemoveFromPq = item;
         pq.delete(toRemoveFromPq);
 
-        if (u === endNode) break;
-        if (avoidNodes.has(u) && u !== endNode) continue;
+        if (avoidNodes.has(u) && u !== startNode && u !== endNode) continue;
 
 
         const neighbors = graph.get(u) || [];
@@ -279,7 +281,7 @@ function dijkstra(startNode, endNode, avoidNodes = new Set()) {
 
     const path = [];
     let curr = endNode;
-    if (prevNodes.get(curr) || curr === startNode) {
+    if (prevNodes.get(curr) || curr === startNode) { 
         while (curr) {
             path.unshift(curr);
             curr = prevNodes.get(curr);
@@ -287,8 +289,8 @@ function dijkstra(startNode, endNode, avoidNodes = new Set()) {
     }
     
     const cost = distances.get(endNode);
-    if (cost === Infinity || path.length === 0 || (path.length === 1 && startNode !== endNode)) {
-            return { path: [], cost: Infinity };
+    if (cost === Infinity || path.length === 0 || (path.length === 1 && startNode !== endNode) || (path.length > 0 && path[0] !== startNode)) {
+        return { path: [], cost: Infinity }; 
     }
     return { path: path, cost: cost };
 }
@@ -309,11 +311,13 @@ const edges = new vis.DataSet();
 graph.forEach((connections, source) => {
     connections.forEach(conn => {
         edges.add({
-            id: `${source}_${conn.to}_${Math.random().toString(36).substr(2, 9)}`,
+            id: `${source}_${conn.to}_w${conn.weight}_${Math.random().toString(36).substr(2, 9)}`, 
             from: source,
             to: conn.to,
+            label: conn.weight > 1 ? String(conn.weight) : undefined, 
             arrows: 'to',
-            color: { color: '#cccccc', highlight:'#ababab' }
+            color: { color: '#cccccc', highlight:'#ababab' },
+            font: { align: 'top', size: 9, color: '#777777'}
         });
     });
 });
@@ -322,16 +326,24 @@ const graphContainer = document.getElementById('graph-container');
 const data = { nodes: nodes, edges: edges };
 
 const options = {
-    layout: { randomSeed: 1 },
+    layout: { randomSeed: 10 },
     edges: {
-        smooth: { type: 'continuous', forceDirection: 'none', roundness: 0.2 }
+        smooth: { type: 'continuous', forceDirection: 'none', roundness: 0.2 },
+        font: {
+            size: 10,
+            align: 'middle'
+        },
+        selfReference: {
+          size: 20,
+          angle: Math.PI / 4
+        }
     },
     physics: {
         enabled: true,
         barnesHut: {
-            gravitationalConstant: -20000, centralGravity: 0.25,
-            springLength: 150, springConstant: 0.04,
-            damping: 0.09, avoidOverlap: 0.5
+            gravitationalConstant: -25000, centralGravity: 0.25,
+            springLength: 180, springConstant: 0.05,
+            damping: 0.09, avoidOverlap: 0.6
         },
         stabilization: {
             enabled: true, iterations: 1000, updateInterval: 25,
@@ -365,12 +377,12 @@ function resetGraphStyles() {
         updateNodeAppearance(nodeId); 
     });
     edges.getIds().forEach(edgeId => {
+        const edge = edges.get(edgeId);
         edges.update({ 
             id: edgeId, 
             color: { color: '#cccccc', highlight:'#ababab' }, 
             width: 1, 
             dashes: false,
-            label: undefined
         });
     });
 }
@@ -381,7 +393,7 @@ async function animatePath(pathSegments, animationStyle, isLoop = false, baseDel
         if (!segment || segment.length === 0) continue;
 
         if (segment.length === 1) { 
-                applyNodeStyle(segment[0], animationStyle);
+            applyNodeStyle(segment[0], animationStyle);
             await new Promise(resolve => setTimeout(resolve, baseDelay / 2));
             continue;
         }
@@ -390,7 +402,7 @@ async function animatePath(pathSegments, animationStyle, isLoop = false, baseDel
             const u = segment[j];
             const v = segment[j+1];
             
-            applyNodeStyle(u, animationStyle);
+            applyNodeStyle(u, animationStyle); 
             await new Promise(resolve => setTimeout(resolve, baseDelay / 2));
 
             const edgeToUpdate = edges.get({
@@ -404,65 +416,47 @@ async function animatePath(pathSegments, animationStyle, isLoop = false, baseDel
                         color: { color: animationStyle.background, highlight: animationStyle.background }, 
                         width: 3.5, 
                         dashes: isLoop ? [5,5] : false,
-                        label: undefined
                     });
                 });
             }
             await new Promise(resolve => setTimeout(resolve, baseDelay / 2));
         }
-        applyNodeStyle(segment[segment.length-1], animationStyle);
+        applyNodeStyle(segment[segment.length-1], animationStyle); 
     }
 }
 
-document.getElementById('findPathBtn').addEventListener('click', async () => {
-    resetGraphStyles(); 
-    const statusDiv = document.getElementById('status');
-    statusDiv.textContent = "Processing...";
+function getPermutations(array) {
+    if (array.length === 0) return [[]];
+    if (array.length === 1) return [[array[0]]]; 
 
-    const startNode = startBiomeSelect.value;
-    const targetNodesInput = Array.from(selectedTargetBiomes);
-    const avoidNodesSet = new Set(selectedAvoidBiomes);
+    const result = [];
+    for (let i = 0; i < array.length; i++) {
+        const currentElement = array[i];
+        const remainingElements = [...array.slice(0, i), ...array.slice(i + 1)];
+        const permsOfRemaining = getPermutations(remainingElements);
+        for (const perm of permsOfRemaining) {
+            result.push([currentElement, ...perm]);
+        }
+    }
+    return result;
+}
 
-    if (!startNode) {
-        statusDiv.textContent = "Please select a start biome.";
-        return;
-    }
-    if (targetNodesInput.length === 0) {
-        statusDiv.textContent = "Please select at least one target biome.";
-        return;
-    }
-        if (avoidNodesSet.has(startNode)) { 
-        statusDiv.innerHTML = `Error: Start node '${startNode.replace(/_/g, ' ')}' cannot be in the avoid list. Please change start node or remove from avoid list.`;
-        return;
-    }
 
-    let statusHTML = "";
-    const effectiveTargetNodes = targetNodesInput.filter(tn => !avoidNodesSet.has(tn) && tn !== startNode);
-    
-    if (effectiveTargetNodes.length !== targetNodesInput.length) {
-        const removedCount = targetNodesInput.length - effectiveTargetNodes.length;
-        statusHTML += `Warning: ${removedCount} target(s) were invalid (already start, or in avoid list) and have been excluded.<br>`;
-    }
-    
-    if (effectiveTargetNodes.length === 0) {
-        statusHTML += `Error: No valid targets to route to after filtering. Ensure targets are not the start node or in the avoid list.`;
-        statusDiv.innerHTML = statusHTML;
-        return;
-    }
-    
-    statusHTML += `Starting from <span class="highlight-start">${startNode.replace(/_/g, ' ')}</span>.<br>Seeking targets: ${effectiveTargetNodes.map(t => `<span class="highlight-target">${t.replace(/_/g, ' ')}</span>`).join(', ')}.`;
+async function findPathGreedy(startNode, effectiveTargetNodes, avoidNodesSet, statusDiv, initialStatusHTML) {
+    let statusHTML = initialStatusHTML;
+    statusHTML += `Starting from <span style="color: ${NODE_STYLES.START.background}; font-weight: bold;">${startNode.replace(/_/g, ' ')}</span>.<br>Seeking targets: ${effectiveTargetNodes.map(t => `<span style="color: ${NODE_STYLES.TARGET.background}; font-weight: bold;">${t.replace(/_/g, ' ')}</span>`).join(', ')}.`;
     if (avoidNodesSet.size > 0) {
-            statusHTML += `<br>Avoiding: ${Array.from(avoidNodesSet).map(a => `<span class="highlight-avoid">${a.replace(/_/g, ' ')}</span>`).join(', ')}.`;
+        statusHTML += `<br>Avoiding: ${Array.from(avoidNodesSet).map(a => `<span style="color: ${NODE_STYLES.AVOID.fontColor};">${a.replace(/_/g, ' ')}</span>`).join(', ')}.`;
     }
     statusDiv.innerHTML = statusHTML;
 
-
     let currentPos = startNode;
     let remainingTargets = new Set(effectiveTargetNodes);
-    const visitedTargetsOrder = []; 
-    const initialPathSegments = [];
-    let totalInitialCost = 0;
+    const visitedTargetsOrder = [];
+    const pathSegments = [];
+    let totalCost = 0;
     let pathPossible = true;
+    let firstVisitedTarget = null;
 
     while (remainingTargets.size > 0) {
         let bestPathToNextTarget = { path: [], cost: Infinity };
@@ -470,9 +464,9 @@ document.getElementById('findPathBtn').addEventListener('click', async () => {
 
         for (const target of remainingTargets) {
             if (target === currentPos) { 
-                    bestPathToNextTarget = { path: [currentPos], cost: 0 }; 
-                    nextTargetChosen = target;
-                    break;
+                bestPathToNextTarget = { path: [currentPos], cost: 0 };
+                nextTargetChosen = target;
+                break;
             }
             const res = dijkstra(currentPos, target, avoidNodesSet);
             if (res.path.length > 0 && res.cost < bestPathToNextTarget.cost) {
@@ -487,93 +481,324 @@ document.getElementById('findPathBtn').addEventListener('click', async () => {
             break;
         }
         
-        if (bestPathToNextTarget.path.length > 1 || (bestPathToNextTarget.path.length === 1 && currentPos !== nextTargetChosen) || (currentPos === nextTargetChosen && !visitedTargetsOrder.includes(currentPos)) ) {
-                initialPathSegments.push(bestPathToNextTarget.path);
+        if (bestPathToNextTarget.path.length > 0) { 
+             pathSegments.push(bestPathToNextTarget.path);
         }
-        
-        totalInitialCost += bestPathToNextTarget.cost;
+
+        totalCost += bestPathToNextTarget.cost;
         currentPos = nextTargetChosen;
 
-        if (!visitedTargetsOrder.includes(nextTargetChosen)){ 
+        if (!visitedTargetsOrder.includes(nextTargetChosen)) {
             visitedTargetsOrder.push(nextTargetChosen);
+            if (!firstVisitedTarget) {
+                firstVisitedTarget = nextTargetChosen;
+            }
         }
         remainingTargets.delete(nextTargetChosen);
 
-        statusHTML += `<br>\nReached <span class="highlight-target">${nextTargetChosen.replace(/_/g, ' ')}</span>` +
-                        (bestPathToNextTarget.path.length > 1 ? ` via\n[${bestPathToNextTarget.path.map(p=>p.replace(/_/g, ' ')).join(' → ')}]` : (bestPathToNextTarget.cost === 0 && bestPathToNextTarget.path[0] === nextTargetChosen ? ' (already there/selected as target)' : '')) +
-                        ` (cost: ${bestPathToNextTarget.cost}).`;
+        statusHTML += `<br>\nReached <span style="color: ${NODE_STYLES.TARGET.background}; font-weight: bold;">${nextTargetChosen.replace(/_/g, ' ')}</span>` +
+            (bestPathToNextTarget.path.length > 1 ? ` via\n[${bestPathToNextTarget.path.map(p => p.replace(/_/g, ' ')).join(' → ')}]` : '') +
+            ` (cost: ${bestPathToNextTarget.cost}).`;
         statusDiv.innerHTML = statusHTML;
-    }
-    
-    if (!pathPossible && visitedTargetsOrder.length < effectiveTargetNodes.length) {
-        statusHTML += `<br><br>Failed to visit all targets. ${visitedTargetsOrder.length} of ${effectiveTargetNodes.length} targets visited.`;
-        if (initialPathSegments.length > 0) {
-            await animatePath(initialPathSegments, NODE_STYLES.PATH_ANIMATION);
-        }
-        statusDiv.innerHTML = statusHTML;
-        visitedTargetsOrder.forEach(tn => applyNodeStyle(tn, NODE_STYLES.TARGET));
-        applyNodeStyle(startNode, NODE_STYLES.START);
-        return;
     }
 
-    statusHTML += `<br><br>All targets visited! Total initial path cost: ${totalInitialCost}.`;
-    statusDiv.innerHTML = statusHTML;
-    if (initialPathSegments.length > 0) {
-            await animatePath(initialPathSegments, NODE_STYLES.PATH_ANIMATION);
+    if (!pathPossible && visitedTargetsOrder.length < effectiveTargetNodes.length) {
+        statusHTML += `<br><br>Failed to visit all targets. ${visitedTargetsOrder.length} of ${effectiveTargetNodes.length} targets visited.`;
+        if (pathSegments.length > 0) {
+            await animatePath(pathSegments, NODE_STYLES.PATH_ANIMATION);
+        }
+    } else if (visitedTargetsOrder.length > 0) {
+        statusHTML += `<br><br>All targets visited! Greedy path cost: ${totalCost}.`;
+        if (pathSegments.length > 0) {
+            await animatePath(pathSegments, NODE_STYLES.PATH_ANIMATION);
+        }
+
+        const loopStartNode = visitedTargetsOrder[visitedTargetsOrder.length - 1]; 
+        const loopEndNode = firstVisitedTarget; 
+
+        statusHTML += `<br><br>Calculating return loop path from <span style="color: ${NODE_STYLES.LOOP_ANIMATION.background}; font-weight: bold;">${loopStartNode.replace(/_/g, ' ')}</span> back to <span style="color: ${NODE_STYLES.LOOP_ANIMATION.background}; font-weight: bold;">${loopEndNode.replace(/_/g, ' ')}</span>...`;
+        statusDiv.innerHTML = statusHTML;
+
+        if (loopStartNode === loopEndNode) { 
+            statusHTML += `<br>Looping on a single unique visited target <span style="color: ${NODE_STYLES.LOOP_ANIMATION.background}; font-weight: bold;">${loopStartNode.replace(/_/g, ' ')}</span>. (Cost: 0 for loop segment).`;
+            totalCost += 0; 
+        } else {
+            const loopPathData = dijkstra(loopStartNode, loopEndNode, avoidNodesSet);
+            if (loopPathData.path.length > 0) {
+                totalCost += loopPathData.cost;
+                statusHTML += `<br>\nReturn loop path found: <span style="color: ${NODE_STYLES.LOOP_ANIMATION.background}; font-weight: bold;">${loopStartNode.replace(/_/g, ' ')}</span> → <span style="color: ${NODE_STYLES.LOOP_ANIMATION.background}; font-weight: bold;">${loopEndNode.replace(/_/g, ' ')}</span>` +
+                                (loopPathData.path.length > 1 ? ` via\n[${loopPathData.path.map(p=>p.replace(/_/g, ' ')).join(' → ')}]` : '') +
+                                ` (Cost: ${loopPathData.cost}). <b>Total combined greedy cost: ${totalCost}</b>.`;
+                await animatePath([loopPathData.path], NODE_STYLES.LOOP_ANIMATION, true, 300);
+            } else {
+                statusHTML += `<br>Cannot find return loop path from <span style="color: ${NODE_STYLES.LOOP_ANIMATION.background}; font-weight: bold;">${loopStartNode.replace(/_/g, ' ')}</span> to <span style="color: ${NODE_STYLES.LOOP_ANIMATION.background}; font-weight: bold;">${loopEndNode.replace(/_/g, ' ')}</span>.`;
+            }
+        }
+    } else if (effectiveTargetNodes.length > 0) { 
+         statusHTML += `<br><br>Could not reach any of the specified targets.`;
     }
+     statusDiv.innerHTML = statusHTML;
 
     visitedTargetsOrder.forEach(tn => applyNodeStyle(tn, NODE_STYLES.TARGET));
     applyNodeStyle(startNode, NODE_STYLES.START);
+    avoidNodesSet.forEach(an => applyNodeStyle(an, NODE_STYLES.AVOID));
+}
 
+function formatPathWithIntermediates(pathArray, startNode, targetNodesInPermutation, isLoopPath = false) {
+    if (!pathArray || pathArray.length === 0) return "";
 
-    const loopableTargets = visitedTargetsOrder.slice(); 
+    const segmentStartNode = pathArray[0];
+    const segmentEndNode = pathArray[pathArray.length - 1];
 
-    if (loopableTargets.length > 0) { 
-        statusHTML += `<br><br>Calculating looping path for visited targets: ${loopableTargets.map(t => `<span class="highlight-loop">${t.replace(/_/g, ' ')}</span>`).join(' → ')}` +
-                        (loopableTargets.length > 1 ? ` → <span class="highlight-loop">${loopableTargets[0].replace(/_/g, ' ')}</span>` : (loopableTargets.length === 1 ? ` (loop on self)` : '')) +
-                        `...`;
-        const loopingPathSegments = [];
-        let totalLoopCost = 0;
-        let loopPossible = true;
-
-        for (let i = 0; i < loopableTargets.length; i++) {
-            const fromNode = loopableTargets[i];
-            const toNode = loopableTargets[(i + 1) % loopableTargets.length];
-            
-            if (fromNode === toNode && loopableTargets.length === 1) { 
-                    statusHTML += `<br>Looping on <span class="highlight-loop">${fromNode.replace(/_/g, ' ')}</span> (cost: 0).`;
-                    continue;
+    return pathArray.map((node, index) => {
+        const nodeText = node.replace(/_/g, ' ');
+        if (index === 0) {
+            if (isLoopPath && node === segmentStartNode) {
+                 return `<span style="color: ${NODE_STYLES.TARGET.background}; font-weight: bold;">${nodeText}</span>`;
+            } else if (!isLoopPath && node === startNode) {
+                return `<span style="color: ${NODE_STYLES.START.background}; font-weight: bold;">${nodeText}</span>`;
+            } else if (targetNodesInPermutation.includes(node)) {
+                 return `<span style="color: ${NODE_STYLES.TARGET.background}; font-weight: bold;">${nodeText}</span>`;
             }
-                if (fromNode === toNode) continue; 
+            return `<span style="color: ${NODE_STYLES.INTERMEDIATE_NODE_TEXT.color}; font-weight: ${NODE_STYLES.INTERMEDIATE_NODE_TEXT.fontWeight};">${nodeText}</span>`;
 
-            const res = dijkstra(fromNode, toNode, avoidNodesSet);
-            if (res.path.length > 0) {
-                loopingPathSegments.push(res.path);
-                totalLoopCost += res.cost;
-                statusHTML += `<br>\nLoop segment: <span class="highlight-loop">${fromNode.replace(/_/g, ' ')}</span> → <span class="highlight-loop">${toNode.replace(/_/g, ' ')}</span>` +
-                                (res.path.length > 1 ? ` via\n[${res.path.map(p=>p.replace(/_/g, ' ')).join(' → ')}]` : '') +
-                                ` (cost: ${res.cost}).`;
-            } else {
-                loopPossible = false;
-                statusHTML += `<br>Cannot find loop segment from <span class="highlight-loop">${fromNode.replace(/_/g, ' ')}</span> to <span class="highlight-loop">${toNode.replace(/_/g, ' ')}</span>.`;
-                break;
+        } else if (index === pathArray.length - 1) {
+            if (targetNodesInPermutation.includes(node) || (isLoopPath && node === segmentEndNode) ) {
+                return `<span style="color: ${NODE_STYLES.TARGET.background}; font-weight: bold;">${nodeText}</span>`;
             }
-            statusDiv.innerHTML = statusHTML; 
-        }
-
-        if (loopPossible) {
-            statusHTML += `<br><br>Looping path complete. Total loop cost: ${totalLoopCost}.`;
-            if (loopingPathSegments.length > 0) {
-                await animatePath(loopingPathSegments, NODE_STYLES.LOOP_ANIMATION, true, 300);
-            }
-            visitedTargetsOrder.forEach(tn => applyNodeStyle(tn, NODE_STYLES.TARGET));
-            applyNodeStyle(startNode, NODE_STYLES.START);
-
+             return `<span style="color: ${NODE_STYLES.INTERMEDIATE_NODE_TEXT.color}; font-weight: ${NODE_STYLES.INTERMEDIATE_NODE_TEXT.fontWeight};">${nodeText}</span>`;
         } else {
-            statusHTML += `<br><br>Failed to complete the loop.`;
+             if (targetNodesInPermutation.includes(node)) {
+                return `<span style="color: ${NODE_STYLES.TARGET.background}; font-weight: bold;">${nodeText}</span>`;
+            }
+            return `<span style="color: ${NODE_STYLES.INTERMEDIATE_NODE_TEXT.color}; font-weight: ${NODE_STYLES.INTERMEDIATE_NODE_TEXT.fontWeight};">${nodeText}</span>`;
         }
-    } else {
-            statusHTML += `<br><br>No targets were successfully visited to form a loop.`;
+    }).join(' → ');
+}
+
+
+async function findPathOptimal(startNode, effectiveTargetNodes, avoidNodesSet, statusDiv, initialStatusHTML_UNUSED) {
+    let statusHTML = ""; 
+    const MAX_TARGETS_FOR_OPTIMAL = 8;
+    statusHTML += `Finding optimal path for ${effectiveTargetNodes.length} target(s) (up to ${MAX_TARGETS_FOR_OPTIMAL} targets for optimal).<br>`;
+    
+    statusHTML += `Starting from: <span style="color: ${NODE_STYLES.START.background}; font-weight: bold;">${startNode.replace(/_/g, ' ')}</span><br>`;
+    statusHTML += `Seeking targets: ${effectiveTargetNodes.map(t => `<span style="color: ${NODE_STYLES.TARGET.background}; font-weight: bold;">${t.replace(/_/g, ' ')}</span>`).join(', ')}.`;
+    if (avoidNodesSet.size > 0) {
+        statusHTML += `<br>Avoiding: ${Array.from(avoidNodesSet).map(a => `<span style="color: ${NODE_STYLES.AVOID.fontColor};">${a.replace(/_/g, ' ')}</span>`).join(', ')}.`;
     }
+    statusHTML += "<br><br>Calculating all pairwise paths...";
     statusDiv.innerHTML = statusHTML;
+    await new Promise(resolve => setTimeout(resolve, 10)); 
+
+    const pathCache = new Map();
+    const nodesForPathCalc = [startNode, ...effectiveTargetNodes];
+
+    for (const nodeA of nodesForPathCalc) {
+        for (const nodeB of effectiveTargetNodes) {
+            if (nodeA === nodeB && nodeA !== startNode) continue; 
+            const cacheKey = `${nodeA}->${nodeB}`;
+            if (!pathCache.has(cacheKey)) {
+                 if (nodeA === nodeB) { 
+                    pathCache.set(cacheKey, { path: [nodeA], cost: 0 });
+                 } else {
+                    pathCache.set(cacheKey, dijkstra(nodeA, nodeB, avoidNodesSet));
+                 }
+            }
+        }
+    }
+    for (const nodeA of effectiveTargetNodes) {
+        for (const nodeB of effectiveTargetNodes) {
+            if (nodeA === nodeB) continue;
+             const cacheKey = `${nodeA}->${nodeB}`;
+             if (!pathCache.has(cacheKey)) {
+                pathCache.set(cacheKey, dijkstra(nodeA, nodeB, avoidNodesSet));
+             }
+        }
+    }
+
+    statusHTML += "<br>Generating permutations and evaluating paths...";
+    statusDiv.innerHTML = statusHTML;
+    await new Promise(resolve => setTimeout(resolve, 10));
+
+    const permutations = getPermutations(effectiveTargetNodes);
+    let minTotalCost = Infinity;
+    let bestPermutationDetails = null;
+
+    for (const perm of permutations) {
+        let currentTotalCost = 0;
+        const currentPathSegmentsArrays = [];
+        let currentLoopSegmentData = null;
+        let permutationPossible = true;
+        let currentPathStringForDebug = ""; 
+
+        const firstSegmentKey = `${startNode}->${perm[0]}`;
+        const firstSegmentData = pathCache.get(firstSegmentKey);
+
+        if (!firstSegmentData || firstSegmentData.cost === Infinity) {
+            permutationPossible = false;
+        } else {
+            currentTotalCost += firstSegmentData.cost;
+            currentPathSegmentsArrays.push(firstSegmentData.path);
+            currentPathStringForDebug += `${startNode.replace(/_/g, ' ')} → ${perm[0].replace(/_/g, ' ')} (Cost: ${firstSegmentData.cost})`;
+        }
+
+        if (permutationPossible) {
+            for (let i = 0; i < perm.length - 1; i++) {
+                const source = perm[i];
+                const dest = perm[i+1];
+                const segmentKey = `${source}->${dest}`;
+                const segmentData = pathCache.get(segmentKey);
+
+                if (!segmentData || segmentData.cost === Infinity) {
+                    permutationPossible = false;
+                    break;
+                }
+                currentTotalCost += segmentData.cost;
+                currentPathSegmentsArrays.push(segmentData.path); 
+                currentPathStringForDebug += ` → ${dest.replace(/_/g, ' ')} (Cost: ${segmentData.cost})`;
+            }
+        }
+        
+        if (permutationPossible) {
+            const loopStartTarget = perm[perm.length - 1];
+            const loopEndTarget = perm[0];
+
+            if (loopStartTarget === loopEndTarget) { 
+                currentLoopSegmentData = { path: [loopStartTarget], cost: 0 };
+                currentPathStringForDebug += ` 🔄 ${loopStartTarget.replace(/_/g, ' ')} (Loop Cost: 0)`;
+            } else {
+                const loopKey = `${loopStartTarget}->${loopEndTarget}`;
+                const loopData = pathCache.get(loopKey);
+                if (!loopData || loopData.cost === Infinity) {
+                    permutationPossible = false;
+                } else {
+                    currentTotalCost += loopData.cost;
+                    currentLoopSegmentData = loopData;
+                    currentPathStringForDebug += ` 🔄 ${loopEndTarget.replace(/_/g, ' ')} (Loop Cost: ${loopData.cost})`;
+                }
+            }
+        }
+
+        if (permutationPossible && currentTotalCost < minTotalCost) {
+            minTotalCost = currentTotalCost;
+            bestPermutationDetails = {
+                permutation: perm,
+                segments: currentPathSegmentsArrays,
+                loopSegment: currentLoopSegmentData,
+                totalCost: minTotalCost,
+                pathStringForDebug: currentPathStringForDebug 
+            };
+        }
+    }
+
+    if (!bestPermutationDetails) {
+        statusHTML += `<br><br>No complete path visiting all targets and looping back could be found.`;
+    } else {
+        statusHTML = `Finding optimal path for ${effectiveTargetNodes.length} target(s) (up to ${MAX_TARGETS_FOR_OPTIMAL} targets for optimal).<br>`;
+        statusHTML += `Starting from: <span style="color: ${NODE_STYLES.START.background}; font-weight: bold;">${startNode.replace(/_/g, ' ')}</span><br>`;
+        statusHTML += `Seeking targets: ${effectiveTargetNodes.map(t => `<span style="color: ${NODE_STYLES.TARGET.background}; font-weight: bold;">${t.replace(/_/g, ' ')}</span>`).join(', ')}.`;
+         if (avoidNodesSet.size > 0) {
+            statusHTML += `<br>Avoiding: ${Array.from(avoidNodesSet).map(a => `<span style="color: ${NODE_STYLES.AVOID.fontColor};">${a.replace(/_/g, ' ')}</span>`).join(', ')}.`;
+        }
+        statusHTML += "<br><br>"; 
+
+        const pathCostWithoutLoop = bestPermutationDetails.totalCost - (bestPermutationDetails.loopSegment ? bestPermutationDetails.loopSegment.cost : 0);
+        
+        let fullOptimalPathDisplay = "";
+        bestPermutationDetails.segments.forEach((segmentPath, index) => {
+            if (index > 0) {
+                fullOptimalPathDisplay += " → " + formatPathWithIntermediates(segmentPath.slice(1), startNode, bestPermutationDetails.permutation);
+            } else {
+                 fullOptimalPathDisplay += formatPathWithIntermediates(segmentPath, startNode, bestPermutationDetails.permutation);
+            }
+        });
+
+
+        statusHTML += `<b>Optimal Path:</b> ${fullOptimalPathDisplay}<br>`;
+        statusHTML += `<b>Cost:</b> ${pathCostWithoutLoop}<br><br>`;
+
+        let loopPathDisplay = "N/A";
+        if (bestPermutationDetails.loopSegment && bestPermutationDetails.loopSegment.path.length > 0) {
+            if (bestPermutationDetails.loopSegment.path.length === 1 && bestPermutationDetails.loopSegment.cost === 0) {
+                 loopPathDisplay = formatPathWithIntermediates(bestPermutationDetails.loopSegment.path, startNode, bestPermutationDetails.permutation, true) + " (self-loop)";
+            } else {
+                 loopPathDisplay = formatPathWithIntermediates(bestPermutationDetails.loopSegment.path, startNode, bestPermutationDetails.permutation, true);
+            }
+        }
+        
+        statusHTML += `<b>Optimal Loop:</b> ${loopPathDisplay}<br>`;
+        statusHTML += `<b>Cost:</b> ${bestPermutationDetails.loopSegment ? bestPermutationDetails.loopSegment.cost : '0'}<br><br>`;
+
+        statusHTML += `<b>Total Cost:</b> ${bestPermutationDetails.totalCost}<br>`;
+        
+        statusDiv.innerHTML = statusHTML;
+
+        await animatePath(bestPermutationDetails.segments, NODE_STYLES.PATH_ANIMATION);
+        if (bestPermutationDetails.loopSegment && bestPermutationDetails.loopSegment.path.length > 0) {
+            if (!(bestPermutationDetails.loopSegment.path.length === 1 && bestPermutationDetails.loopSegment.cost === 0)) {
+                 await animatePath([bestPermutationDetails.loopSegment.path], NODE_STYLES.LOOP_ANIMATION, true, 300);
+            }
+        }
+    }
+    statusDiv.innerHTML = statusHTML; 
+
+    effectiveTargetNodes.forEach(tn => applyNodeStyle(tn, NODE_STYLES.TARGET));
+    applyNodeStyle(startNode, NODE_STYLES.START);
+    avoidNodesSet.forEach(an => applyNodeStyle(an, NODE_STYLES.AVOID));
+}
+
+
+document.getElementById('findPathBtn').addEventListener('click', async () => {
+    resetGraphStyles();
+    const statusDiv = document.getElementById('status');
+    statusDiv.textContent = "Processing...";
+    let statusHTML = ""; 
+
+    const startNode = startBiomeSelect.value;
+    const targetNodesInput = Array.from(selectedTargetBiomes);
+    const avoidNodesSet = new Set(selectedAvoidBiomes);
+
+    if (!startNode) {
+        statusDiv.textContent = "Please select a start biome.";
+        return;
+    }
+    if (targetNodesInput.length === 0) {
+        statusDiv.textContent = "Please select at least one target biome.";
+        return;
+    }
+    if (avoidNodesSet.has(startNode)) {
+        statusDiv.innerHTML = `Error: Start node '${startNode.replace(/_/g, ' ')}' cannot be in the avoid list. Please change start node or remove from avoid list.`;
+        return;
+    }
+
+    const effectiveTargetNodes = targetNodesInput.filter(tn => !avoidNodesSet.has(tn) && tn !== startNode);
+
+    if (effectiveTargetNodes.length !== targetNodesInput.length) {
+        const removedCount = targetNodesInput.length - effectiveTargetNodes.length;
+        statusHTML += `Warning: ${removedCount} target(s) were invalid (e.g. start node, in avoid list) and have been excluded.<br>`;
+    }
+
+    if (effectiveTargetNodes.length === 0) {
+        statusHTML += `Error: No valid targets to route to after filtering. Ensure targets are not the start node or in the avoid list.`;
+        statusDiv.innerHTML = statusHTML;
+        targetNodesInput.forEach(tn => updateNodeAppearance(tn)); 
+        avoidNodesSet.forEach(an => updateNodeAppearance(an));
+        updateNodeAppearance(startNode);
+        return;
+    }
+    
+    const MAX_TARGETS_FOR_OPTIMAL = 8; 
+
+    if (effectiveTargetNodes.length > MAX_TARGETS_FOR_OPTIMAL) {
+        statusHTML += `Number of targets (${effectiveTargetNodes.length}) exceeds ${MAX_TARGETS_FOR_OPTIMAL}. Using a greedy heuristic (may not be the absolute shortest path).<br>`;
+        await findPathGreedy(startNode, effectiveTargetNodes, avoidNodesSet, statusDiv, statusHTML);
+    } else {
+        if (effectiveTargetNodes.length > 0) { 
+            await findPathOptimal(startNode, effectiveTargetNodes, avoidNodesSet, statusDiv, statusHTML);
+        } else { 
+             statusHTML += `No effective targets to plan a path for.`;
+             statusDiv.innerHTML = statusHTML;
+        }
+    }
 });
