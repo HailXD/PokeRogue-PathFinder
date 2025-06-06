@@ -639,14 +639,12 @@ function formatPathWithIntermediates(pathArray, journeyStartNode, targetNodesInS
 async function findPathOptimal(startNode, effectiveTargetNodes, avoidNodesSet, statusDiv, initialStatusHTML) {
     let statusHTML = initialStatusHTML;
     const MAX_TARGETS_FOR_OPTIMAL = 8;
-    statusHTML += `Finding optimal path for ${effectiveTargetNodes.length} target(s) (up to ${MAX_TARGETS_FOR_OPTIMAL} targets for optimal).<br>`;
-
     statusHTML += `Starting from: <span style="color: ${NODE_STYLES.START.background}; font-weight: bold;">${startNode.replace(/_/g, ' ')}</span><br>`;
     statusHTML += `Seeking targets: ${effectiveTargetNodes.map(t => `<span style="color: ${NODE_STYLES.TARGET.background}; font-weight: bold;">${t.replace(/_/g, ' ')}</span>`).join(', ')}.`;
     if (avoidNodesSet.size > 0) {
         statusHTML += `<br>Avoiding: ${Array.from(avoidNodesSet).map(a => `<span style="color: ${NODE_STYLES.AVOID.fontColor};">${a.replace(/_/g, ' ')}</span>`).join(', ')}.`;
     }
-    statusHTML += "<br><br>Calculating all pairwise paths...";
+    statusHTML += "<br><br>Calculating optimal paths...";
     statusDiv.innerHTML = statusHTML;
     await new Promise(resolve => setTimeout(resolve, 10));
 
@@ -667,7 +665,6 @@ async function findPathOptimal(startNode, effectiveTargetNodes, avoidNodesSet, s
     }
 
 
-    statusHTML += "<br>Generating permutations and evaluating paths...";
     statusDiv.innerHTML = statusHTML;
     await new Promise(resolve => setTimeout(resolve, 10));
 
@@ -772,8 +769,8 @@ async function findPathOptimal(startNode, effectiveTargetNodes, avoidNodesSet, s
         });
 
 
-        statusHTML += `<b>Optimal Path (to last target in sequence <span style="color: ${NODE_STYLES.TARGET.background}; font-weight: bold;">${bestPermutationDetails.permutation[bestPermutationDetails.permutation.length-1].replace(/_/g,' ')}</span>):</b> ${fullOptimalPathDisplay}<br>`;
-        statusHTML += `<b>Cost (to last target):</b> ${pathCostWithoutLoop}<br><br>`;
+        statusHTML += `<b>Optimal Path:</b> ${fullOptimalPathDisplay}<br>`;
+        statusHTML += `<b>Cost:</b> ${pathCostWithoutLoop}<br><br>`;
 
         let loopPathDisplay = "N/A";
         let loopCostDisplay = "0";
