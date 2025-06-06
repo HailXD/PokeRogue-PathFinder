@@ -67,11 +67,14 @@ for (const sourceBiome in biomeLinksRaw) {
     }
 
     destinations.forEach(destEntry => {
+        const useWeight = false;
         let targetBiome;
         let weight = 1;
-
         if (Array.isArray(destEntry)) {
-            [targetBiome, weight] = destEntry;
+            targetBiome = destEntry[0];
+            if (useWeight) {
+                weight = destEntry[1];
+            }
         } else {
             targetBiome = destEntry;
         }
