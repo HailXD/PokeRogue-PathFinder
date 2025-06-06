@@ -63,16 +63,16 @@ for (const sourceBiome in biomeLinksRaw) {
     if (!graph.has(sourceBiome)) graph.set(sourceBiome, []);
     let destinations = biomeLinksRaw[sourceBiome];
     if (!Array.isArray(destinations)) {
-        destinations = [destinations]; 
+        destinations = [destinations];
     }
 
     destinations.forEach(destEntry => {
         let targetBiome;
-        let weight = 1; 
+        let weight = 1;
 
-        if (Array.isArray(destEntry)) { 
+        if (Array.isArray(destEntry)) {
             targetBiome = destEntry[0];
-        } else { 
+        } else {
             targetBiome = destEntry;
         }
 
@@ -125,7 +125,7 @@ function getNodeStyleDefinition(nodeId) {
     const isAvoid = selectedAvoidBiomes.has(nodeId);
 
     if (isStart) return NODE_STYLES.START;
-    if (isAvoid) return NODE_STYLES.AVOID; 
+    if (isAvoid) return NODE_STYLES.AVOID;
     if (isTarget) return NODE_STYLES.TARGET;
     return NODE_STYLES.DEFAULT;
 }
@@ -164,8 +164,8 @@ function createMultiSelectItems(containerId, selectedSet, indicatorId) {
                 item.classList.add('selected');
             }
             updateSelectedIndicator(selectedSet, indicator);
-            updateNodeAppearance(biomeValue); 
-            
+            updateNodeAppearance(biomeValue);
+
             if (containerId === 'avoidBiomesContainer' && selectedTargetBiomes.has(biomeValue)) {
                 selectedTargetBiomes.delete(biomeValue);
                 const targetItems = document.querySelectorAll('#targetBiomesContainer .multi-select-item');
@@ -173,7 +173,7 @@ function createMultiSelectItems(containerId, selectedSet, indicatorId) {
                     if (tItem.dataset.value === biomeValue) tItem.classList.remove('selected');
                 });
                 updateSelectedIndicator(selectedTargetBiomes, document.getElementById('selectedTargetsIndicator'));
-                updateNodeAppearance(biomeValue); 
+                updateNodeAppearance(biomeValue);
             }
             if (containerId === 'targetBiomesContainer' && selectedAvoidBiomes.has(biomeValue)) {
                 selectedAvoidBiomes.delete(biomeValue);
@@ -182,7 +182,7 @@ function createMultiSelectItems(containerId, selectedSet, indicatorId) {
                     if (aItem.dataset.value === biomeValue) aItem.classList.remove('selected');
                 });
                 updateSelectedIndicator(selectedAvoidBiomes, document.getElementById('selectedAvoidIndicator'));
-                updateNodeAppearance(biomeValue); 
+                updateNodeAppearance(biomeValue);
             }
         });
         container.appendChild(item);
@@ -220,9 +220,9 @@ startBiomeSelect.addEventListener('change', (event) => {
     }
 
     if (previousStartNode && previousStartNode !== newStartNode) {
-        updateNodeAppearance(previousStartNode); 
+        updateNodeAppearance(previousStartNode);
     }
-    updateNodeAppearance(newStartNode); 
+    updateNodeAppearance(newStartNode);
 
     previousStartNode = newStartNode;
 });
@@ -231,7 +231,7 @@ startBiomeSelect.addEventListener('change', (event) => {
 function dijkstra(startNode, endNode, avoidNodes = new Set()) {
     const distances = new Map();
     const prevNodes = new Map();
-    const pq = new Set(); 
+    const pq = new Set();
 
     allBiomes.forEach(biome => {
         distances.set(biome, Infinity);
@@ -250,8 +250,8 @@ function dijkstra(startNode, endNode, avoidNodes = new Set()) {
                 u = item[1];
             }
         }
-        
-        if (u === null) break; 
+
+        if (u === null) break;
 
         let toRemoveFromPq;
         for(const item of pq) if(item[1] === u && item[0] === minDist) toRemoveFromPq = item;
@@ -263,17 +263,17 @@ function dijkstra(startNode, endNode, avoidNodes = new Set()) {
         const neighbors = graph.get(u) || [];
         for (const edge of neighbors) {
             const v = edge.to;
-            if (avoidNodes.has(v) && v !== endNode) continue; 
+            if (avoidNodes.has(v) && v !== endNode) continue;
 
             const alt = distances.get(u) + edge.weight;
             if (alt < distances.get(v)) {
                 distances.set(v, alt);
                 prevNodes.set(v, u);
-                
+
                 let vToRemoveFromPq;
                 for(const item of pq) if(item[1] === v) vToRemoveFromPq = item;
                 if(vToRemoveFromPq) pq.delete(vToRemoveFromPq);
-                
+
                 pq.add([alt, v]);
             }
         }
@@ -281,16 +281,16 @@ function dijkstra(startNode, endNode, avoidNodes = new Set()) {
 
     const path = [];
     let curr = endNode;
-    if (prevNodes.get(curr) || curr === startNode) { 
+    if (prevNodes.get(curr) || curr === startNode) {
         while (curr) {
             path.unshift(curr);
             curr = prevNodes.get(curr);
         }
     }
-    
+
     const cost = distances.get(endNode);
     if (cost === Infinity || path.length === 0 || (path.length === 1 && startNode !== endNode) || (path.length > 0 && path[0] !== startNode)) {
-        return { path: [], cost: Infinity }; 
+        return { path: [], cost: Infinity };
     }
     return { path: path, cost: cost };
 }
@@ -311,10 +311,10 @@ const edges = new vis.DataSet();
 graph.forEach((connections, source) => {
     connections.forEach(conn => {
         edges.add({
-            id: `${source}_${conn.to}_w${conn.weight}_${Math.random().toString(36).substr(2, 9)}`, 
+            id: `${source}_${conn.to}_w${conn.weight}_${Math.random().toString(36).substr(2, 9)}`,
             from: source,
             to: conn.to,
-            label: conn.weight > 1 ? String(conn.weight) : undefined, 
+            label: conn.weight > 1 ? String(conn.weight) : undefined,
             arrows: 'to',
             color: { color: '#cccccc', highlight:'#ababab' },
             font: { align: 'top', size: 9, color: '#777777'}
@@ -374,14 +374,14 @@ biomeNamesSorted.forEach(biomeId => {
 
 function resetGraphStyles() {
     nodes.getIds().forEach(nodeId => {
-        updateNodeAppearance(nodeId); 
+        updateNodeAppearance(nodeId);
     });
     edges.getIds().forEach(edgeId => {
         const edge = edges.get(edgeId);
-        edges.update({ 
-            id: edgeId, 
-            color: { color: '#cccccc', highlight:'#ababab' }, 
-            width: 1, 
+        edges.update({
+            id: edgeId,
+            color: { color: '#cccccc', highlight:'#ababab' },
+            width: 1,
             dashes: false,
         });
     });
@@ -392,7 +392,7 @@ async function animatePath(pathSegments, animationStyle, isLoop = false, baseDel
         const segment = pathSegments[i];
         if (!segment || segment.length === 0) continue;
 
-        if (segment.length === 1) { 
+        if (segment.length === 1) {
             applyNodeStyle(segment[0], animationStyle);
             await new Promise(resolve => setTimeout(resolve, baseDelay / 2));
             continue;
@@ -401,33 +401,33 @@ async function animatePath(pathSegments, animationStyle, isLoop = false, baseDel
         for (let j = 0; j < segment.length - 1; j++) {
             const u = segment[j];
             const v = segment[j+1];
-            
-            applyNodeStyle(u, animationStyle); 
+
+            applyNodeStyle(u, animationStyle);
             await new Promise(resolve => setTimeout(resolve, baseDelay / 2));
 
             const edgeToUpdate = edges.get({
                 filter: item => (item.from === u && item.to === v)
             });
-            
+
             if (edgeToUpdate.length > 0) {
-                edgeToUpdate.forEach(edge => { 
-                    edges.update({ 
-                        id: edge.id, 
-                        color: { color: animationStyle.background, highlight: animationStyle.background }, 
-                        width: 3.5, 
+                edgeToUpdate.forEach(edge => {
+                    edges.update({
+                        id: edge.id,
+                        color: { color: animationStyle.background, highlight: animationStyle.background },
+                        width: 3.5,
                         dashes: isLoop ? [5,5] : false,
                     });
                 });
             }
             await new Promise(resolve => setTimeout(resolve, baseDelay / 2));
         }
-        applyNodeStyle(segment[segment.length-1], animationStyle); 
+        applyNodeStyle(segment[segment.length-1], animationStyle);
     }
 }
 
 function getPermutations(array) {
     if (array.length === 0) return [[]];
-    if (array.length === 1) return [[array[0]]]; 
+    if (array.length === 1) return [[array[0]]];
 
     const result = [];
     for (let i = 0; i < array.length; i++) {
@@ -441,6 +441,56 @@ function getPermutations(array) {
     return result;
 }
 
+function findShortestRoundTripFromNode(node, avoidNodesSet) {
+    let minLoopCost = Infinity;
+    let bestLoopPath = [];
+
+    const potentialIntermediates = Array.from(allBiomes).filter(
+        b => b !== node && !avoidNodesSet.has(b)
+    );
+
+    if (potentialIntermediates.length === 0) {
+        return { path: [], cost: Infinity };
+    }
+
+    for (const intermediate of potentialIntermediates) {
+        const pathToIntermediate = dijkstra(node, intermediate, avoidNodesSet);
+        if (pathToIntermediate.cost === Infinity || !pathToIntermediate.path || pathToIntermediate.path.length === 0) {
+            continue;
+        }
+
+        const pathFromIntermediate = dijkstra(intermediate, node, avoidNodesSet);
+        if (pathFromIntermediate.cost === Infinity || !pathFromIntermediate.path || pathFromIntermediate.path.length === 0) {
+            continue;
+        }
+        
+        if (pathToIntermediate.path.length < 2 && pathToIntermediate.cost === 0 && node === intermediate) continue;
+        if (pathFromIntermediate.path.length < 2 && pathFromIntermediate.cost === 0 && node === intermediate) continue;
+
+
+        const currentLoopCost = pathToIntermediate.cost + pathFromIntermediate.cost;
+
+        if (currentLoopCost < minLoopCost) {
+            minLoopCost = currentLoopCost;
+            if (pathFromIntermediate.path.length > 0 && pathFromIntermediate.path[0] === intermediate) {
+                 bestLoopPath = [...pathToIntermediate.path, ...pathFromIntermediate.path.slice(1)];
+            } else {
+                 bestLoopPath = [...pathToIntermediate.path, ...pathFromIntermediate.path];
+            }
+            if (bestLoopPath.length < 2 && minLoopCost > 0) {
+                minLoopCost = Infinity;
+                bestLoopPath = [];
+            }
+        }
+    }
+    if (minLoopCost === Infinity || bestLoopPath.length < 2 || (bestLoopPath.length === 2 && bestLoopPath[0] !== bestLoopPath[1] && minLoopCost === 0 ) ) {
+        if (bestLoopPath.length < 2) return { path: [], cost: Infinity };
+    }
+
+
+    return { path: bestLoopPath, cost: minLoopCost };
+}
+
 
 async function findPathGreedy(startNode, effectiveTargetNodes, avoidNodesSet, statusDiv, initialStatusHTML) {
     let statusHTML = initialStatusHTML;
@@ -449,6 +499,8 @@ async function findPathGreedy(startNode, effectiveTargetNodes, avoidNodesSet, st
         statusHTML += `<br>Avoiding: ${Array.from(avoidNodesSet).map(a => `<span style="color: ${NODE_STYLES.AVOID.fontColor};">${a.replace(/_/g, ' ')}</span>`).join(', ')}.`;
     }
     statusDiv.innerHTML = statusHTML;
+    await new Promise(resolve => setTimeout(resolve, 10));
+
 
     let currentPos = startNode;
     let remainingTargets = new Set(effectiveTargetNodes);
@@ -463,7 +515,7 @@ async function findPathGreedy(startNode, effectiveTargetNodes, avoidNodesSet, st
         let nextTargetChosen = null;
 
         for (const target of remainingTargets) {
-            if (target === currentPos) { 
+            if (target === currentPos) {
                 bestPathToNextTarget = { path: [currentPos], cost: 0 };
                 nextTargetChosen = target;
                 break;
@@ -480,10 +532,13 @@ async function findPathGreedy(startNode, effectiveTargetNodes, avoidNodesSet, st
             statusHTML += `<br><br>Cannot reach any remaining targets from ${currentPos.replace(/_/g, ' ')}. Pathfinding stopped.`;
             break;
         }
-        
-        if (bestPathToNextTarget.path.length > 0) { 
-             pathSegments.push(bestPathToNextTarget.path);
+
+        if (bestPathToNextTarget.path.length > 0 && !(bestPathToNextTarget.path.length === 1 && bestPathToNextTarget.path[0] === currentPos && bestPathToNextTarget.cost > 0) ) {
+            if (bestPathToNextTarget.path.length > 1 || bestPathToNextTarget.cost === 0) {
+                pathSegments.push(bestPathToNextTarget.path);
+            }
         }
+
 
         totalCost += bestPathToNextTarget.cost;
         currentPos = nextTargetChosen;
@@ -497,9 +552,10 @@ async function findPathGreedy(startNode, effectiveTargetNodes, avoidNodesSet, st
         remainingTargets.delete(nextTargetChosen);
 
         statusHTML += `<br>\nReached <span style="color: ${NODE_STYLES.TARGET.background}; font-weight: bold;">${nextTargetChosen.replace(/_/g, ' ')}</span>` +
-            (bestPathToNextTarget.path.length > 1 ? ` via\n[${bestPathToNextTarget.path.map(p => p.replace(/_/g, ' ')).join(' → ')}]` : '') +
+            (bestPathToNextTarget.path.length > 1 ? ` via\n[${formatPathWithIntermediates(bestPathToNextTarget.path, startNode, effectiveTargetNodes)}]` : '') +
             ` (cost: ${bestPathToNextTarget.cost}).`;
         statusDiv.innerHTML = statusHTML;
+        await new Promise(resolve => setTimeout(resolve, 10));
     }
 
     if (!pathPossible && visitedTargetsOrder.length < effectiveTargetNodes.length) {
@@ -508,33 +564,44 @@ async function findPathGreedy(startNode, effectiveTargetNodes, avoidNodesSet, st
             await animatePath(pathSegments, NODE_STYLES.PATH_ANIMATION);
         }
     } else if (visitedTargetsOrder.length > 0) {
-        statusHTML += `<br><br>All targets visited! Greedy path cost: ${totalCost}.`;
+        statusHTML += `<br><br>All targets visited! Greedy path cost (to last target): ${totalCost}.`;
         if (pathSegments.length > 0) {
             await animatePath(pathSegments, NODE_STYLES.PATH_ANIMATION);
         }
 
-        const loopStartNode = visitedTargetsOrder[visitedTargetsOrder.length - 1]; 
-        const loopEndNode = firstVisitedTarget; 
+        const loopStartNode = visitedTargetsOrder[visitedTargetsOrder.length - 1];
+        const loopEndNode = firstVisitedTarget;
 
         statusHTML += `<br><br>Calculating return loop path from <span style="color: ${NODE_STYLES.LOOP_ANIMATION.background}; font-weight: bold;">${loopStartNode.replace(/_/g, ' ')}</span> back to <span style="color: ${NODE_STYLES.LOOP_ANIMATION.background}; font-weight: bold;">${loopEndNode.replace(/_/g, ' ')}</span>...`;
         statusDiv.innerHTML = statusHTML;
+        await new Promise(resolve => setTimeout(resolve, 10));
 
-        if (loopStartNode === loopEndNode) { 
-            statusHTML += `<br>Looping on a single unique visited target <span style="color: ${NODE_STYLES.LOOP_ANIMATION.background}; font-weight: bold;">${loopStartNode.replace(/_/g, ' ')}</span>. (Cost: 0 for loop segment).`;
-            totalCost += 0; 
+        if (loopStartNode === loopEndNode) {
+            statusHTML += `<br>Looping from/to the same target <span style="color: ${NODE_STYLES.TARGET.background}; font-weight: bold;">${loopStartNode.replace(/_/g, ' ')}</span>. Applying mandatory round trip rule.`;
+            statusDiv.innerHTML = statusHTML;
+            await new Promise(resolve => setTimeout(resolve, 10));
+
+            const roundTripData = findShortestRoundTripFromNode(loopStartNode, avoidNodesSet);
+            if (roundTripData.cost !== Infinity && roundTripData.path.length > 0) {
+                totalCost += roundTripData.cost;
+                 statusHTML += `<br><b>Mandatory Round Trip:</b> ${formatPathWithIntermediates(roundTripData.path, startNode, [loopStartNode], true)}` +
+                                `<br><b>Cost:</b> ${roundTripData.cost}. <br><b>Total combined greedy cost: ${totalCost}</b>.`;
+                await animatePath([roundTripData.path], NODE_STYLES.LOOP_ANIMATION, true, 300);
+            } else {
+                statusHTML += `<br>Cannot find a mandatory round trip from <span style="font-weight: bold;">${loopStartNode.replace(/_/g, ' ')}</span> via another node. Loop part failed. Total cost remains ${totalCost}.`;
+            }
         } else {
             const loopPathData = dijkstra(loopStartNode, loopEndNode, avoidNodesSet);
-            if (loopPathData.path.length > 0) {
+            if (loopPathData.path.length > 0 && loopPathData.cost !== Infinity) {
                 totalCost += loopPathData.cost;
-                statusHTML += `<br>\nReturn loop path found: <span style="color: ${NODE_STYLES.LOOP_ANIMATION.background}; font-weight: bold;">${loopStartNode.replace(/_/g, ' ')}</span> → <span style="color: ${NODE_STYLES.LOOP_ANIMATION.background}; font-weight: bold;">${loopEndNode.replace(/_/g, ' ')}</span>` +
-                                (loopPathData.path.length > 1 ? ` via\n[${loopPathData.path.map(p=>p.replace(/_/g, ' ')).join(' → ')}]` : '') +
-                                ` (Cost: ${loopPathData.cost}). <b>Total combined greedy cost: ${totalCost}</b>.`;
+                statusHTML += `<br><b>Return Loop Path:</b> ${formatPathWithIntermediates(loopPathData.path, startNode, [loopStartNode, loopEndNode], true)}` +
+                                `<br><b>Cost:</b> ${loopPathData.cost}. <br><b>Total combined greedy cost: ${totalCost}</b>.`;
                 await animatePath([loopPathData.path], NODE_STYLES.LOOP_ANIMATION, true, 300);
             } else {
-                statusHTML += `<br>Cannot find return loop path from <span style="color: ${NODE_STYLES.LOOP_ANIMATION.background}; font-weight: bold;">${loopStartNode.replace(/_/g, ' ')}</span> to <span style="color: ${NODE_STYLES.LOOP_ANIMATION.background}; font-weight: bold;">${loopEndNode.replace(/_/g, ' ')}</span>.`;
+                statusHTML += `<br>Cannot find return loop path from <span style="font-weight: bold;">${loopStartNode.replace(/_/g, ' ')}</span> to <span style="font-weight: bold;">${loopEndNode.replace(/_/g, ' ')}</span>. Total cost remains ${totalCost}.`;
             }
         }
-    } else if (effectiveTargetNodes.length > 0) { 
+    } else if (effectiveTargetNodes.length > 0) {
          statusHTML += `<br><br>Could not reach any of the specified targets.`;
     }
      statusDiv.innerHTML = statusHTML;
@@ -544,7 +611,7 @@ async function findPathGreedy(startNode, effectiveTargetNodes, avoidNodesSet, st
     avoidNodesSet.forEach(an => applyNodeStyle(an, NODE_STYLES.AVOID));
 }
 
-function formatPathWithIntermediates(pathArray, startNode, targetNodesInPermutation, isLoopPath = false) {
+function formatPathWithIntermediates(pathArray, journeyStartNode, targetNodesInSegment, isLoopPath = false) {
     if (!pathArray || pathArray.length === 0) return "";
 
     const segmentStartNode = pathArray[0];
@@ -552,36 +619,28 @@ function formatPathWithIntermediates(pathArray, startNode, targetNodesInPermutat
 
     return pathArray.map((node, index) => {
         const nodeText = node.replace(/_/g, ' ');
-        if (index === 0) {
-            if (isLoopPath && node === segmentStartNode) {
-                 return `<span style="color: ${NODE_STYLES.TARGET.background}; font-weight: bold;">${nodeText}</span>`;
-            } else if (!isLoopPath && node === startNode) {
-                return `<span style="color: ${NODE_STYLES.START.background}; font-weight: bold;">${nodeText}</span>`;
-            } else if (targetNodesInPermutation.includes(node)) {
-                 return `<span style="color: ${NODE_STYLES.TARGET.background}; font-weight: bold;">${nodeText}</span>`;
-            }
-            return `<span style="color: ${NODE_STYLES.INTERMEDIATE_NODE_TEXT.color}; font-weight: ${NODE_STYLES.INTERMEDIATE_NODE_TEXT.fontWeight};">${nodeText}</span>`;
+        let styleClass = "";
 
-        } else if (index === pathArray.length - 1) {
-            if (targetNodesInPermutation.includes(node) || (isLoopPath && node === segmentEndNode) ) {
-                return `<span style="color: ${NODE_STYLES.TARGET.background}; font-weight: bold;">${nodeText}</span>`;
-            }
-             return `<span style="color: ${NODE_STYLES.INTERMEDIATE_NODE_TEXT.color}; font-weight: ${NODE_STYLES.INTERMEDIATE_NODE_TEXT.fontWeight};">${nodeText}</span>`;
+        const isJourneyStart = node === journeyStartNode && index === 0 && !isLoopPath;
+        const isSegmentTarget = targetNodesInSegment.includes(node);
+
+
+        if (isJourneyStart) {
+            return `<span style="color: ${NODE_STYLES.START.background}; font-weight: bold;">${nodeText}</span>`;
+        } else if (isSegmentTarget) {
+             return `<span style="color: ${NODE_STYLES.TARGET.background}; font-weight: bold;">${nodeText}</span>`;
         } else {
-             if (targetNodesInPermutation.includes(node)) {
-                return `<span style="color: ${NODE_STYLES.TARGET.background}; font-weight: bold;">${nodeText}</span>`;
-            }
             return `<span style="color: ${NODE_STYLES.INTERMEDIATE_NODE_TEXT.color}; font-weight: ${NODE_STYLES.INTERMEDIATE_NODE_TEXT.fontWeight};">${nodeText}</span>`;
         }
     }).join(' → ');
 }
 
 
-async function findPathOptimal(startNode, effectiveTargetNodes, avoidNodesSet, statusDiv, initialStatusHTML_UNUSED) {
-    let statusHTML = ""; 
+async function findPathOptimal(startNode, effectiveTargetNodes, avoidNodesSet, statusDiv, initialStatusHTML) {
+    let statusHTML = initialStatusHTML;
     const MAX_TARGETS_FOR_OPTIMAL = 8;
     statusHTML += `Finding optimal path for ${effectiveTargetNodes.length} target(s) (up to ${MAX_TARGETS_FOR_OPTIMAL} targets for optimal).<br>`;
-    
+
     statusHTML += `Starting from: <span style="color: ${NODE_STYLES.START.background}; font-weight: bold;">${startNode.replace(/_/g, ' ')}</span><br>`;
     statusHTML += `Seeking targets: ${effectiveTargetNodes.map(t => `<span style="color: ${NODE_STYLES.TARGET.background}; font-weight: bold;">${t.replace(/_/g, ' ')}</span>`).join(', ')}.`;
     if (avoidNodesSet.size > 0) {
@@ -589,33 +648,24 @@ async function findPathOptimal(startNode, effectiveTargetNodes, avoidNodesSet, s
     }
     statusHTML += "<br><br>Calculating all pairwise paths...";
     statusDiv.innerHTML = statusHTML;
-    await new Promise(resolve => setTimeout(resolve, 10)); 
+    await new Promise(resolve => setTimeout(resolve, 10));
 
     const pathCache = new Map();
     const nodesForPathCalc = [startNode, ...effectiveTargetNodes];
 
     for (const nodeA of nodesForPathCalc) {
-        for (const nodeB of effectiveTargetNodes) {
-            if (nodeA === nodeB && nodeA !== startNode) continue; 
+        for (const nodeB of nodesForPathCalc) {
+            if (nodeA === nodeB) {
+                 pathCache.set(`${nodeA}->${nodeB}`, { path: [nodeA], cost: 0 });
+                 continue;
+            }
             const cacheKey = `${nodeA}->${nodeB}`;
             if (!pathCache.has(cacheKey)) {
-                 if (nodeA === nodeB) { 
-                    pathCache.set(cacheKey, { path: [nodeA], cost: 0 });
-                 } else {
-                    pathCache.set(cacheKey, dijkstra(nodeA, nodeB, avoidNodesSet));
-                 }
+                pathCache.set(cacheKey, dijkstra(nodeA, nodeB, avoidNodesSet));
             }
         }
     }
-    for (const nodeA of effectiveTargetNodes) {
-        for (const nodeB of effectiveTargetNodes) {
-            if (nodeA === nodeB) continue;
-             const cacheKey = `${nodeA}->${nodeB}`;
-             if (!pathCache.has(cacheKey)) {
-                pathCache.set(cacheKey, dijkstra(nodeA, nodeB, avoidNodesSet));
-             }
-        }
-    }
+
 
     statusHTML += "<br>Generating permutations and evaluating paths...";
     statusDiv.innerHTML = statusHTML;
@@ -630,7 +680,6 @@ async function findPathOptimal(startNode, effectiveTargetNodes, avoidNodesSet, s
         const currentPathSegmentsArrays = [];
         let currentLoopSegmentData = null;
         let permutationPossible = true;
-        let currentPathStringForDebug = ""; 
 
         const firstSegmentKey = `${startNode}->${perm[0]}`;
         const firstSegmentData = pathCache.get(firstSegmentKey);
@@ -639,8 +688,7 @@ async function findPathOptimal(startNode, effectiveTargetNodes, avoidNodesSet, s
             permutationPossible = false;
         } else {
             currentTotalCost += firstSegmentData.cost;
-            currentPathSegmentsArrays.push(firstSegmentData.path);
-            currentPathStringForDebug += `${startNode.replace(/_/g, ' ')} → ${perm[0].replace(/_/g, ' ')} (Cost: ${firstSegmentData.cost})`;
+            if (firstSegmentData.path.length > 0) currentPathSegmentsArrays.push(firstSegmentData.path);
         }
 
         if (permutationPossible) {
@@ -655,27 +703,30 @@ async function findPathOptimal(startNode, effectiveTargetNodes, avoidNodesSet, s
                     break;
                 }
                 currentTotalCost += segmentData.cost;
-                currentPathSegmentsArrays.push(segmentData.path); 
-                currentPathStringForDebug += ` → ${dest.replace(/_/g, ' ')} (Cost: ${segmentData.cost})`;
+                if (segmentData.path.length > 0) currentPathSegmentsArrays.push(segmentData.path);
             }
         }
-        
+
         if (permutationPossible) {
             const loopStartTarget = perm[perm.length - 1];
             const loopEndTarget = perm[0];
 
-            if (loopStartTarget === loopEndTarget) { 
-                currentLoopSegmentData = { path: [loopStartTarget], cost: 0 };
-                currentPathStringForDebug += ` 🔄 ${loopStartTarget.replace(/_/g, ' ')} (Loop Cost: 0)`;
+            if (loopStartTarget === loopEndTarget) {
+                const roundTripData = findShortestRoundTripFromNode(loopStartTarget, avoidNodesSet);
+                if (roundTripData.cost === Infinity || roundTripData.path.length === 0) {
+                    permutationPossible = false;
+                } else {
+                    currentTotalCost += roundTripData.cost;
+                    currentLoopSegmentData = roundTripData;
+                }
             } else {
                 const loopKey = `${loopStartTarget}->${loopEndTarget}`;
                 const loopData = pathCache.get(loopKey);
-                if (!loopData || loopData.cost === Infinity) {
+                if (!loopData || loopData.cost === Infinity || loopData.path.length === 0) {
                     permutationPossible = false;
                 } else {
                     currentTotalCost += loopData.cost;
                     currentLoopSegmentData = loopData;
-                    currentPathStringForDebug += ` 🔄 ${loopEndTarget.replace(/_/g, ' ')} (Loop Cost: ${loopData.cost})`;
                 }
             }
         }
@@ -686,62 +737,84 @@ async function findPathOptimal(startNode, effectiveTargetNodes, avoidNodesSet, s
                 permutation: perm,
                 segments: currentPathSegmentsArrays,
                 loopSegment: currentLoopSegmentData,
-                totalCost: minTotalCost,
-                pathStringForDebug: currentPathStringForDebug 
+                totalCost: minTotalCost
             };
         }
     }
 
-    if (!bestPermutationDetails) {
-        statusHTML += `<br><br>No complete path visiting all targets and looping back could be found.`;
-    } else {
-        statusHTML = `Finding optimal path for ${effectiveTargetNodes.length} target(s) (up to ${MAX_TARGETS_FOR_OPTIMAL} targets for optimal).<br>`;
-        statusHTML += `Starting from: <span style="color: ${NODE_STYLES.START.background}; font-weight: bold;">${startNode.replace(/_/g, ' ')}</span><br>`;
-        statusHTML += `Seeking targets: ${effectiveTargetNodes.map(t => `<span style="color: ${NODE_STYLES.TARGET.background}; font-weight: bold;">${t.replace(/_/g, ' ')}</span>`).join(', ')}.`;
-         if (avoidNodesSet.size > 0) {
-            statusHTML += `<br>Avoiding: ${Array.from(avoidNodesSet).map(a => `<span style="color: ${NODE_STYLES.AVOID.fontColor};">${a.replace(/_/g, ' ')}</span>`).join(', ')}.`;
-        }
-        statusHTML += "<br><br>"; 
+    statusHTML = initialStatusHTML;
+    statusHTML += `Finding optimal path for ${effectiveTargetNodes.length} target(s).<br>`;
+    statusHTML += `Starting from: <span style="color: ${NODE_STYLES.START.background}; font-weight: bold;">${startNode.replace(/_/g, ' ')}</span><br>`;
+    statusHTML += `Seeking targets: ${effectiveTargetNodes.map(t => `<span style="color: ${NODE_STYLES.TARGET.background}; font-weight: bold;">${t.replace(/_/g, ' ')}</span>`).join(', ')}.`;
+     if (avoidNodesSet.size > 0) {
+        statusHTML += `<br>Avoiding: ${Array.from(avoidNodesSet).map(a => `<span style="color: ${NODE_STYLES.AVOID.fontColor};">${a.replace(/_/g, ' ')}</span>`).join(', ')}.`;
+    }
+    statusHTML += "<br><br>";
 
+
+    if (!bestPermutationDetails) {
+        statusHTML += `No complete path visiting all targets and looping back could be found.`;
+    } else {
         const pathCostWithoutLoop = bestPermutationDetails.totalCost - (bestPermutationDetails.loopSegment ? bestPermutationDetails.loopSegment.cost : 0);
-        
+
         let fullOptimalPathDisplay = "";
+        let lastNodeOfPreviousSegment = null;
         bestPermutationDetails.segments.forEach((segmentPath, index) => {
-            if (index > 0) {
-                fullOptimalPathDisplay += " → " + formatPathWithIntermediates(segmentPath.slice(1), startNode, bestPermutationDetails.permutation);
-            } else {
-                 fullOptimalPathDisplay += formatPathWithIntermediates(segmentPath, startNode, bestPermutationDetails.permutation);
+            let displaySegment = segmentPath;
+            if (index > 0 && segmentPath.length > 0 && segmentPath[0] === lastNodeOfPreviousSegment) {
+                displaySegment = segmentPath.slice(1);
             }
+            if (displaySegment.length > 0) {
+                 if (fullOptimalPathDisplay !== "") fullOptimalPathDisplay += " → ";
+                 fullOptimalPathDisplay += formatPathWithIntermediates(displaySegment, startNode, bestPermutationDetails.permutation);
+            }
+            if (segmentPath.length > 0) lastNodeOfPreviousSegment = segmentPath[segmentPath.length-1];
         });
 
 
-        statusHTML += `<b>Optimal Path:</b> ${fullOptimalPathDisplay}<br>`;
-        statusHTML += `<b>Cost:</b> ${pathCostWithoutLoop}<br><br>`;
+        statusHTML += `<b>Optimal Path (to last target in sequence <span style="color: ${NODE_STYLES.TARGET.background}; font-weight: bold;">${bestPermutationDetails.permutation[bestPermutationDetails.permutation.length-1].replace(/_/g,' ')}</span>):</b> ${fullOptimalPathDisplay}<br>`;
+        statusHTML += `<b>Cost (to last target):</b> ${pathCostWithoutLoop}<br><br>`;
 
         let loopPathDisplay = "N/A";
-        if (bestPermutationDetails.loopSegment && bestPermutationDetails.loopSegment.path.length > 0) {
-            if (bestPermutationDetails.loopSegment.path.length === 1 && bestPermutationDetails.loopSegment.cost === 0) {
-                 loopPathDisplay = formatPathWithIntermediates(bestPermutationDetails.loopSegment.path, startNode, bestPermutationDetails.permutation, true) + " (self-loop)";
-            } else {
-                 loopPathDisplay = formatPathWithIntermediates(bestPermutationDetails.loopSegment.path, startNode, bestPermutationDetails.permutation, true);
-            }
-        }
-        
-        statusHTML += `<b>Optimal Loop:</b> ${loopPathDisplay}<br>`;
-        statusHTML += `<b>Cost:</b> ${bestPermutationDetails.loopSegment ? bestPermutationDetails.loopSegment.cost : '0'}<br><br>`;
+        let loopCostDisplay = "0";
+        if (bestPermutationDetails.loopSegment && bestPermutationDetails.loopSegment.path.length > 0 && bestPermutationDetails.loopSegment.cost !== Infinity) {
+            loopCostDisplay = String(bestPermutationDetails.loopSegment.cost);
+            
+            let loopTargetsContext = [];
+            const loopActualStart = bestPermutationDetails.loopSegment.path[0];
+            const loopActualEnd = bestPermutationDetails.loopSegment.path[bestPermutationDetails.loopSegment.path.length - 1];
 
-        statusHTML += `<b>Total Cost:</b> ${bestPermutationDetails.totalCost}<br>`;
-        
-        statusDiv.innerHTML = statusHTML;
+            const conceptualLoopStart = bestPermutationDetails.permutation[bestPermutationDetails.permutation.length - 1];
+            const conceptualLoopEnd = bestPermutationDetails.permutation[0];
+
+            if (loopActualStart === conceptualLoopStart) loopTargetsContext.push(conceptualLoopStart);
+            if (conceptualLoopEnd !== conceptualLoopStart && loopActualEnd === conceptualLoopEnd) {
+                 if (!loopTargetsContext.includes(conceptualLoopEnd)) loopTargetsContext.push(conceptualLoopEnd);
+            } else if (conceptualLoopEnd === conceptualLoopStart && !loopTargetsContext.includes(conceptualLoopEnd)) {
+                loopTargetsContext.push(conceptualLoopEnd);
+            }
+
+
+            loopPathDisplay = formatPathWithIntermediates(
+                bestPermutationDetails.loopSegment.path,
+                startNode,
+                loopTargetsContext,
+                true
+            );
+        }
+
+        statusHTML += `<b>Optimal Loop Path:</b> ${loopPathDisplay}<br>`;
+        statusHTML += `<b>Loop Cost:</b> ${loopCostDisplay}<br><br>`;
+        statusHTML += `<b>Total Optimal Cost:</b> ${bestPermutationDetails.totalCost}<br>`;
 
         await animatePath(bestPermutationDetails.segments, NODE_STYLES.PATH_ANIMATION);
-        if (bestPermutationDetails.loopSegment && bestPermutationDetails.loopSegment.path.length > 0) {
+        if (bestPermutationDetails.loopSegment && bestPermutationDetails.loopSegment.path.length > 0 && bestPermutationDetails.loopSegment.cost !== Infinity) {
             if (!(bestPermutationDetails.loopSegment.path.length === 1 && bestPermutationDetails.loopSegment.cost === 0)) {
                  await animatePath([bestPermutationDetails.loopSegment.path], NODE_STYLES.LOOP_ANIMATION, true, 300);
             }
         }
     }
-    statusDiv.innerHTML = statusHTML; 
+    statusDiv.innerHTML = statusHTML;
 
     effectiveTargetNodes.forEach(tn => applyNodeStyle(tn, NODE_STYLES.TARGET));
     applyNodeStyle(startNode, NODE_STYLES.START);
@@ -752,23 +825,64 @@ async function findPathOptimal(startNode, effectiveTargetNodes, avoidNodesSet, s
 document.getElementById('findPathBtn').addEventListener('click', async () => {
     resetGraphStyles();
     const statusDiv = document.getElementById('status');
-    statusDiv.textContent = "Processing...";
-    let statusHTML = ""; 
+    statusDiv.innerHTML = "Processing...";
+    let statusHTML = "";
 
     const startNode = startBiomeSelect.value;
     const targetNodesInput = Array.from(selectedTargetBiomes);
     const avoidNodesSet = new Set(selectedAvoidBiomes);
 
+    biomeNamesSorted.forEach(biomeId => updateNodeAppearance(biomeId));
+
+
     if (!startNode) {
         statusDiv.textContent = "Please select a start biome.";
         return;
     }
-    if (targetNodesInput.length === 0) {
-        statusDiv.textContent = "Please select at least one target biome.";
-        return;
-    }
+
     if (avoidNodesSet.has(startNode)) {
         statusDiv.innerHTML = `Error: Start node '${startNode.replace(/_/g, ' ')}' cannot be in the avoid list. Please change start node or remove from avoid list.`;
+        return;
+    }
+
+    const isOnlyStartNodeTarget = targetNodesInput.length === 0 || (targetNodesInput.length === 1 && targetNodesInput[0] === startNode);
+
+    if (isOnlyStartNodeTarget) {
+        let actionDescription = "";
+        if (targetNodesInput.length === 0) {
+             actionDescription = `No targets selected. Assuming mandatory round trip from Start Node: <span style="color: ${NODE_STYLES.START.background}; font-weight: bold;">${startNode.replace(/_/g, ' ')}</span>.`;
+        } else {
+             actionDescription = `Start Node <span style="color: ${NODE_STYLES.START.background}; font-weight: bold;">${startNode.replace(/_/g, ' ')}</span> is the only target. Finding a mandatory round trip.`;
+        }
+        statusHTML = actionDescription + "<br>";
+
+        if (avoidNodesSet.size > 0) {
+            statusHTML += `Avoiding: ${Array.from(avoidNodesSet).map(a => `<span style="color: ${NODE_STYLES.AVOID.fontColor};">${a.replace(/_/g, ' ')}</span>`).join(', ')}.<br>`;
+        }
+        statusDiv.innerHTML = statusHTML;
+        await new Promise(resolve => setTimeout(resolve, 10));
+
+        const roundTripData = findShortestRoundTripFromNode(startNode, avoidNodesSet);
+
+        if (roundTripData.cost !== Infinity && roundTripData.path.length > 0) {
+            statusHTML += `<br><b>Mandatory Round Trip:</b> ${formatPathWithIntermediates(roundTripData.path, startNode, [startNode], true)}<br>`;
+            statusHTML += `<b>Cost:</b> ${roundTripData.cost}`;
+            statusDiv.innerHTML = statusHTML;
+            await animatePath([roundTripData.path], NODE_STYLES.LOOP_ANIMATION, true, 300);
+        } else {
+            statusHTML += `<br>Cannot find a mandatory round trip from <span style="font-weight: bold;">${startNode.replace(/_/g, ' ')}</span> via another node.`;
+            statusDiv.innerHTML = statusHTML;
+        }
+        applyNodeStyle(startNode, NODE_STYLES.START);
+        avoidNodesSet.forEach(an => applyNodeStyle(an, NODE_STYLES.AVOID));
+        if (targetNodesInput.includes(startNode)) updateNodeAppearance(startNode);
+
+        return;
+    }
+
+
+    if (targetNodesInput.length === 0) {
+        statusDiv.textContent = "Please select at least one target biome.";
         return;
     }
 
@@ -776,29 +890,23 @@ document.getElementById('findPathBtn').addEventListener('click', async () => {
 
     if (effectiveTargetNodes.length !== targetNodesInput.length) {
         const removedCount = targetNodesInput.length - effectiveTargetNodes.length;
-        statusHTML += `Warning: ${removedCount} target(s) were invalid (e.g. start node, in avoid list) and have been excluded.<br>`;
+        const autoRemovedReason = targetNodesInput.some(tn => tn === startNode) ? " (start node cannot be a distinct target)" :
+                                 targetNodesInput.some(tn => avoidNodesSet.has(tn)) ? " (in avoid list)" : "";
+        statusHTML += `Warning: ${removedCount} target(s) were invalid${autoRemovedReason} and have been excluded.<br>`;
     }
 
     if (effectiveTargetNodes.length === 0) {
         statusHTML += `Error: No valid targets to route to after filtering. Ensure targets are not the start node or in the avoid list.`;
         statusDiv.innerHTML = statusHTML;
-        targetNodesInput.forEach(tn => updateNodeAppearance(tn)); 
-        avoidNodesSet.forEach(an => updateNodeAppearance(an));
-        updateNodeAppearance(startNode);
         return;
     }
-    
-    const MAX_TARGETS_FOR_OPTIMAL = 8; 
+
+    const MAX_TARGETS_FOR_OPTIMAL = 8;
 
     if (effectiveTargetNodes.length > MAX_TARGETS_FOR_OPTIMAL) {
         statusHTML += `Number of targets (${effectiveTargetNodes.length}) exceeds ${MAX_TARGETS_FOR_OPTIMAL}. Using a greedy heuristic (may not be the absolute shortest path).<br>`;
         await findPathGreedy(startNode, effectiveTargetNodes, avoidNodesSet, statusDiv, statusHTML);
     } else {
-        if (effectiveTargetNodes.length > 0) { 
-            await findPathOptimal(startNode, effectiveTargetNodes, avoidNodesSet, statusDiv, statusHTML);
-        } else { 
-             statusHTML += `No effective targets to plan a path for.`;
-             statusDiv.innerHTML = statusHTML;
-        }
+        await findPathOptimal(startNode, effectiveTargetNodes, avoidNodesSet, statusDiv, statusHTML);
     }
 });
