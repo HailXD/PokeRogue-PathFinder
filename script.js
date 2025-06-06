@@ -108,6 +108,10 @@ const selectedPokemonIndicator = document.getElementById('selectedPokemonIndicat
 let allPokemonData = {};
 let biomePokemonSpawns = new Map();
 
+const rarityOrder = [
+  'COMMON', 'UNCOMMON', 'RARE', 'SUPER_RARE', 'ULTRA_RARE',
+  'BOSS', 'BOSS_RARE', 'BOSS_SUPER_RARE', 'BOSS_ULTRA_RARE'
+];
 
 const NODE_STYLES = {
     DEFAULT: { background: '#97C2FC', border: '#666666', fontColor: 'black', fontSize: 12, bold: false, borderWidth: 1.5 },
@@ -334,29 +338,21 @@ graph.forEach((connections, source) => {
     });
 });
 
+function sortSpawns(a, b) {
+    const rarityAIndex = rarityOrder.indexOf(a.rarity);
+    const rarityBIndex = rarityOrder.indexOf(b.rarity);
 
-/**
- * **THIS IS THE CORRECTED FUNCTION**
- * Creates an HTMLElement for the tooltip instead of an HTML string.
- * vis.js will render an HTMLElement correctly, but will escape an HTML string.
- */
-function createTooltipElement(biomeId) {
-    const spawns = biomePokemonSpawns.get(biomeId) || [];
-    const biomeName = biomeId.replace(/_/g, ' ');
-
-    const tooltipElement = document.createElement('div');
-
-    const header = document.createElement('h4');
-    header.textContent = biomeName;
-    tooltipElement.appendChild(header);
-
-    if (spawns.length === 0) {
-        tooltipElement.append('No known Pokémon spawns.');
-        return tooltipElement;
+    if (rarityAIndex !== rarityBIndex) {
+        return rarityAIndex - rarityBIndex;
     }
 
+    return a.pokemonName.localeCompare(b.pokemonName);
+}
+
+function createPokemonListElement(spawns, listType) {
     const list = document.createElement('ul');
-    spawns.sort((a, b) => a.pokemonName.localeCompare(b.pokemonName)).forEach(spawn => {
+
+    spawns.sort(sortSpawns).forEach(spawn => {
         const pokemonName = spawn.pokemonName.replace(/_/g, ' ');
         const rarityClass = `rarity-tag rarity-${spawn.rarity}`;
         const timeIcon = TIME_ICONS[spawn.time] || '❓';
@@ -366,14 +362,13 @@ function createTooltipElement(biomeId) {
         const nameSpan = document.createElement('span');
         nameSpan.className = 'pokemon-name';
         nameSpan.textContent = pokemonName;
-        
+        nameSpan.style.marginRight = '10px';
         const detailsSpan = document.createElement('span');
         detailsSpan.className = 'spawn-details';
 
         const raritySpan = document.createElement('span');
         raritySpan.className = rarityClass;
         raritySpan.textContent = spawn.rarity.replace(/_/g,' ');
-
         const timeSpan = document.createElement('span');
         timeSpan.textContent = timeIcon;
 
@@ -385,10 +380,46 @@ function createTooltipElement(biomeId) {
 
         list.appendChild(listItem);
     });
-    tooltipElement.appendChild(list);
+    return list;
+}
+
+function createTooltipElement(biomeId) {
+    const allSpawns = biomePokemonSpawns.get(biomeId) || [];
+    const biomeName = biomeId.replace(/_/g, ' ');
+
+    const tooltipElement = document.createElement('div');
+    const header = document.createElement('h4');
+    header.textContent = biomeName;
+    tooltipElement.appendChild(header);
+
+    if (selectedPokemon.size === 0) {
+        tooltipElement.append('Select Pokemon to highlight spawns.');
+        tooltipElement.appendChild(document.createElement('br'));
+        tooltipElement.append(' Click node for full spawn list.')
+        return tooltipElement;
+    }
+
+    const selectedSpawns = allSpawns.filter(spawn => selectedPokemon.has(spawn.pokemonName));
+    
+    if (selectedSpawns.length === 0) {
+        tooltipElement.append('No selected Pokémon spawns in this biome.');
+        tooltipElement.appendChild(document.createElement('br'));
+        tooltipElement.append('Click node for full spawn list.');
+        return tooltipElement;
+    }
+
+    tooltipElement.append('Selected Pokémon Spawns:');
+    const listElement = createPokemonListElement(selectedSpawns, 'tooltip');
+    tooltipElement.appendChild(listElement);
+
+    const footer = document.createElement('p');
+    footer.style.cssText = 'margin-top: 8px; font-size: 0.9em; border-top: 1px solid #eee; padding-top: 5px; margin-bottom: 0;';
+    footer.textContent = 'Click node for full spawn list.';
+    tooltipElement.appendChild(footer);
 
     return tooltipElement;
 }
+
 
 function initializeGraph() {
     const nodeData = biomeNamesSorted.map(name => ({
@@ -435,6 +466,13 @@ function initializeGraph() {
 
     network.on("stabilizationIterationsDone", function () {
         network.setOptions({ physics: { enabled: false } });
+    });
+
+    network.on('click', function(params) {
+        if (params.nodes.length > 0) {
+            const biomeId = params.nodes[0];
+            populateAndShowPokemonModal(biomeId);
+        }
     });
 
     updateAllNodeStyles();
@@ -956,6 +994,7 @@ function populatePokemonList() {
             }
             updateSelectedIndicator(selectedPokemon, selectedPokemonIndicator);
             updateAllNodeStyles();
+            nodes.update(nodes.get().map(node => ({id: node.id, title: createTooltipElement(node.id)})));
         });
         pokemonListContainer.appendChild(item);
     });
@@ -990,6 +1029,40 @@ function handlePokemonSearch() {
     }
 }
 
+let pokemonModal, modalCloseBtn, modalBiomeName, modalPokemonList;
+
+function initializeModal() {
+    pokemonModal = document.getElementById('pokemon-modal');
+    modalCloseBtn = document.querySelector('.modal-close-btn');
+    modalBiomeName = document.getElementById('modal-biome-name');
+    modalPokemonList = document.getElementById('modal-pokemon-list-container');
+
+    modalCloseBtn.onclick = () => {
+        pokemonModal.style.display = 'none';
+    };
+
+    window.onclick = (event) => {
+        if (event.target == pokemonModal) {
+            pokemonModal.style.display = 'none';
+        }
+    };
+}
+
+function populateAndShowPokemonModal(biomeId) {
+    const spawns = biomePokemonSpawns.get(biomeId) || [];
+    modalBiomeName.textContent = `${biomeId.replace(/_/g, ' ')} Spawns`;
+    modalPokemonList.innerHTML = '';
+
+    if (spawns.length === 0) {
+        modalPokemonList.textContent = 'No known Pokémon spawns in this biome.';
+    } else {
+        const listElement = createPokemonListElement(spawns, 'modal');
+        modalPokemonList.appendChild(listElement);
+    }
+
+    pokemonModal.style.display = 'block';
+}
+
 async function initializeApp() {
     try {
         const response = await fetch('pokemon_spawn.json');
@@ -1010,7 +1083,8 @@ async function initializeApp() {
         populatePokemonList();
         pokemonSearchInput.addEventListener('input', handlePokemonSearch);
         updateSelectedIndicator(selectedPokemon, selectedPokemonIndicator);
-
+        
+        initializeModal();
         initializeGraph();
 
     } catch (error) {

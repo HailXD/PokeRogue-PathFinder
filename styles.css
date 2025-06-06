@@ -198,12 +198,112 @@ button#findPathBtn:hover {
     color: white;
 }
 
-.rarity-COMMON { background-color: #6890F0; }
-.rarity-UNCOMMON { background-color: #78C850; }
-.rarity-RARE { background-color: #F8D030; }
-.rarity-SUPER_RARE { background-color: #F08030; }
-.rarity-ULTRA_RARE { background-color: #A890F0; }
-.rarity-BOSS { background-color: #C03028; border: 1px solid #F8D030; }
-.rarity-BOSS_RARE { background-color: #C03028; border: 1px solid #A890F0; }
-.rarity-BOSS_SUPER_RARE { background-color: #C03028; border: 1px solid #A890F0; }
-.rarity-BOSS_ULTRA_RARE { background-color: #A8A878; border: 1px solid #A890F0; }
+.rarity-COMMON { background-color: #6890F0; border-radius: 8px; padding: 2px 4px;color:white;font-weight: bold;}
+.rarity-UNCOMMON { background-color: #78C850; border-radius: 8px; padding: 2px 4px;color:white;font-weight: bold;}
+.rarity-RARE { background-color: #F8D030; border-radius: 8px; padding: 2px 4px;color:white;font-weight: bold;}
+.rarity-SUPER_RARE { background-color: #F08030; border-radius: 8px; padding: 2px 4px;color:white;font-weight: bold;}
+.rarity-ULTRA_RARE { background-color: #A890F0; border-radius: 8px; padding: 2px 4px;color:white;font-weight: bold;}
+.rarity-BOSS { background-color: #C03028; border: 1px solid #F8D030; border-radius: 8px; padding: 2px 4px;color:white;font-weight: bold;}
+.rarity-BOSS_RARE { background-color: #C03028; border: 1px solid #A890F0; border-radius: 8px; padding: 2px 4px;color:white;font-weight: bold;}
+.rarity-BOSS_SUPER_RARE { background-color: #C03028; border: 1px solid #A890F0; border-radius: 8px; padding: 2px 4px;color:white;font-weight: bold;}
+.rarity-BOSS_ULTRA_RARE { background-color: #A8A878; border: 1px solid #A890F0; border-radius: 8px; padding: 2px 4px;color:white;font-weight: bold;}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.5);
+    -webkit-animation-name: fadeIn;
+    -webkit-animation-duration: 0.4s;
+    animation-name: fadeIn;
+    animation-duration: 0.4s
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 10% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 90%;
+    max-width: 500px;
+    border-radius: 8px;
+    position: relative;
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+    -webkit-animation-name: slideIn;
+    -webkit-animation-duration: 0.4s;
+    animation-name: slideIn;
+    animation-duration: 0.4s
+}
+
+.modal-close-btn {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.modal-close-btn:hover,
+.modal-close-btn:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+#modal-pokemon-list-container {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-top: 15px;
+}
+
+#modal-pokemon-list-container ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+#modal-pokemon-list-container li {
+    padding: 6px 2px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+}
+
+#modal-pokemon-list-container li:last-child {
+    border-bottom: none;
+}
+
+#modal-pokemon-list-container .pokemon-name {
+    font-weight: bold;
+}
+
+#modal-pokemon-list-container .spawn-details {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+@-webkit-keyframes slideIn {
+  from {top: -300px; opacity: 0} 
+  to {top: 0; opacity: 1}
+}
+
+@keyframes slideIn {
+  from {margin-top: 0; opacity: 0}
+  to {margin-top: 10%; opacity: 1}
+}
+
+@-webkit-keyframes fadeIn {
+  from {opacity: 0} 
+  to {opacity: 1}
+}
+
+@keyframes fadeIn {
+  from {opacity: 0} 
+  to {opacity: 1}
+}
