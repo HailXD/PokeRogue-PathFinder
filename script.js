@@ -71,7 +71,7 @@ for (const sourceBiome in biomeLinksRaw) {
         let weight = 1;
 
         if (Array.isArray(destEntry)) {
-            targetBiome = destEntry[0];
+            [targetBiome, weight] = destEntry;
         } else {
             targetBiome = destEntry;
         }
@@ -103,6 +103,7 @@ const pokemonSearchInput = document.getElementById('pokemonSearch');
 const pokemonListContainer = document.getElementById('pokemonListContainer');
 const selectedPokemonIndicator = document.getElementById('selectedPokemonIndicator');
 let allPokemonData = {};
+let biomePokemonSpawns = new Map();
 
 
 const NODE_STYLES = {
@@ -110,37 +111,56 @@ const NODE_STYLES = {
     START: { background: '#00FFFF', border: '#008B8B', fontColor: 'black', fontSize: 14, bold: true, borderWidth: 2.5 },
     TARGET: { background: '#FF00FF', border: '#8B008B', fontColor: 'white', fontSize: 14, bold: true, borderWidth: 2.5 },
     AVOID: { background: '#e0e0e0', border: '#757575', fontColor: '#757575', fontSize: 10, bold: false, borderWidth: 1.5 },
+    POKEMON_SPAWN_HIGHLIGHT: { border: '#FFD700', borderWidth: 4 },
     PATH_ANIMATION: { background: '#79B6FF', border: 'black', borderWidth: 3 },
     LOOP_ANIMATION: { background: '#ed3545', border: 'black', borderWidth: 3 },
     INTERMEDIATE_NODE_TEXT: { color: 'black', fontWeight: 'normal' }
 };
 
-function applyNodeStyle(nodeId, style) {
-    if (nodes.get(nodeId)) {
-        nodes.update({
+const TIME_ICONS = {
+    DAWN: '🌅', DAY: '☀️', DUSK: '🌇', NIGHT: '🌙', ALL: '🌍'
+};
+
+function updateAllNodeStyles() {
+    const pokemonSpawnBiomes = new Set();
+    if (selectedPokemon.size > 0) {
+        selectedPokemon.forEach(pokemonName => {
+            const spawns = allPokemonData[pokemonName] || [];
+            spawns.forEach(spawnInfo => pokemonSpawnBiomes.add(spawnInfo[0]));
+        });
+    }
+
+    const updates = nodes.getIds().map(nodeId => {
+        const isStart = nodeId === startBiomeSelect.value;
+        const isTarget = selectedTargetBiomes.has(nodeId);
+        const isAvoid = selectedAvoidBiomes.has(nodeId);
+        const isPokemonSpawn = pokemonSpawnBiomes.has(nodeId);
+
+        let style = NODE_STYLES.DEFAULT;
+        if (isStart) style = NODE_STYLES.START;
+        else if (isAvoid) style = NODE_STYLES.AVOID;
+        else if (isTarget) style = NODE_STYLES.TARGET;
+
+        const nodeUpdate = {
             id: nodeId,
             color: { background: style.background, border: style.border },
             font: { color: style.fontColor, size: style.fontSize, bold: style.bold },
             borderWidth: style.borderWidth
-        });
+        };
+
+        if (isPokemonSpawn) {
+            nodeUpdate.color.border = NODE_STYLES.POKEMON_SPAWN_HIGHLIGHT.border;
+            nodeUpdate.borderWidth = NODE_STYLES.POKEMON_SPAWN_HIGHLIGHT.borderWidth;
+        }
+
+        return nodeUpdate;
+    });
+
+    if (updates.length > 0) {
+        nodes.update(updates);
     }
 }
 
-function getNodeStyleDefinition(nodeId) {
-    const isStart = nodeId === startBiomeSelect.value;
-    const isTarget = selectedTargetBiomes.has(nodeId);
-    const isAvoid = selectedAvoidBiomes.has(nodeId);
-
-    if (isStart) return NODE_STYLES.START;
-    if (isAvoid) return NODE_STYLES.AVOID;
-    if (isTarget) return NODE_STYLES.TARGET;
-    return NODE_STYLES.DEFAULT;
-}
-
-function updateNodeAppearance(nodeId) {
-    const style = getNodeStyleDefinition(nodeId);
-    applyNodeStyle(nodeId, style);
-}
 
 function createMultiSelectItems(containerId, selectedSet, indicatorId) {
     const container = document.getElementById(containerId);
@@ -171,26 +191,23 @@ function createMultiSelectItems(containerId, selectedSet, indicatorId) {
                 item.classList.add('selected');
             }
             updateSelectedIndicator(selectedSet, indicator);
-            updateNodeAppearance(biomeValue);
+            updateAllNodeStyles();
 
             if (containerId === 'avoidBiomesContainer' && selectedTargetBiomes.has(biomeValue)) {
                 selectedTargetBiomes.delete(biomeValue);
-                const targetItems = document.querySelectorAll('#targetBiomesContainer .multi-select-item');
-                targetItems.forEach(tItem => {
+                document.querySelectorAll('#targetBiomesContainer .multi-select-item').forEach(tItem => {
                     if (tItem.dataset.value === biomeValue) tItem.classList.remove('selected');
                 });
                 updateSelectedIndicator(selectedTargetBiomes, document.getElementById('selectedTargetsIndicator'));
-                updateNodeAppearance(biomeValue);
             }
             if (containerId === 'targetBiomesContainer' && selectedAvoidBiomes.has(biomeValue)) {
                 selectedAvoidBiomes.delete(biomeValue);
-                const avoidItems = document.querySelectorAll('#avoidBiomesContainer .multi-select-item');
-                avoidItems.forEach(aItem => {
+                document.querySelectorAll('#avoidBiomesContainer .multi-select-item').forEach(aItem => {
                     if (aItem.dataset.value === biomeValue) aItem.classList.remove('selected');
                 });
                 updateSelectedIndicator(selectedAvoidBiomes, document.getElementById('selectedAvoidIndicator'));
-                updateNodeAppearance(biomeValue);
             }
+            updateAllNodeStyles();
         });
         container.appendChild(item);
     });
@@ -219,19 +236,14 @@ startBiomeSelect.addEventListener('change', (event) => {
 
     if (selectedAvoidBiomes.has(newStartNode)) {
         selectedAvoidBiomes.delete(newStartNode);
-        const avoidItems = document.querySelectorAll('#avoidBiomesContainer .multi-select-item');
-        avoidItems.forEach(aItem => {
+        document.querySelectorAll('#avoidBiomesContainer .multi-select-item').forEach(aItem => {
             if (aItem.dataset.value === newStartNode) aItem.classList.remove('selected');
         });
         updateSelectedIndicator(selectedAvoidBiomes, document.getElementById('selectedAvoidIndicator'));
     }
 
-    if (previousStartNode && previousStartNode !== newStartNode) {
-        updateNodeAppearance(previousStartNode);
-    }
-    updateNodeAppearance(newStartNode);
-
     previousStartNode = newStartNode;
+    updateAllNodeStyles();
 });
 
 
@@ -303,17 +315,7 @@ function dijkstra(startNode, endNode, avoidNodes = new Set()) {
 }
 
 let network = null;
-const nodes = new vis.DataSet(biomeNamesSorted.map(name => {
-    const defaultStyle = NODE_STYLES.DEFAULT;
-    return {
-        id: name,
-        label: name.replace(/_/g, ' '),
-        color: { background: defaultStyle.background, border: defaultStyle.border },
-        font: { color: defaultStyle.fontColor, size: defaultStyle.fontSize, bold: defaultStyle.bold },
-        borderWidth: defaultStyle.borderWidth
-    };
-}));
-
+let nodes = new vis.DataSet();
 const edges = new vis.DataSet();
 graph.forEach((connections, source) => {
     connections.forEach(conn => {
@@ -329,62 +331,115 @@ graph.forEach((connections, source) => {
     });
 });
 
-const graphContainer = document.getElementById('graph-container');
-const data = { nodes: nodes, edges: edges };
 
-const options = {
-    layout: { randomSeed: 10 },
-    edges: {
-        smooth: { type: 'continuous', forceDirection: 'none', roundness: 0.2 },
-        font: {
-            size: 10,
-            align: 'middle'
-        },
-        selfReference: {
-          size: 20,
-          angle: Math.PI / 4
-        }
-    },
-    physics: {
-        enabled: true,
-        barnesHut: {
-            gravitationalConstant: -25000, centralGravity: 0.25,
-            springLength: 180, springConstant: 0.05,
-            damping: 0.09, avoidOverlap: 0.6
-        },
-        stabilization: {
-            enabled: true, iterations: 1000, updateInterval: 25,
-            onlyDynamicEdges: false, fit: true
-        },
-        minVelocity: 0.75
-    },
-    interaction: {
-        tooltipDelay: 200, hideEdgesOnDrag: true,
-        dragNodes: true, zoomView: true, dragView: true
-    },
-    nodes: {
-        shape: 'box', margin: 10,
-        font: { face: 'Arial' },
-        borderWidth: 1.5
+/**
+ * **THIS IS THE CORRECTED FUNCTION**
+ * Creates an HTMLElement for the tooltip instead of an HTML string.
+ * vis.js will render an HTMLElement correctly, but will escape an HTML string.
+ */
+function createTooltipElement(biomeId) {
+    const spawns = biomePokemonSpawns.get(biomeId) || [];
+    const biomeName = biomeId.replace(/_/g, ' ');
+
+    const tooltipElement = document.createElement('div');
+
+    const header = document.createElement('h4');
+    header.textContent = biomeName;
+    tooltipElement.appendChild(header);
+
+    if (spawns.length === 0) {
+        tooltipElement.append('No known Pokémon spawns.');
+        return tooltipElement;
     }
-};
-network = new vis.Network(graphContainer, data, options);
 
-network.on("stabilizationIterationsDone", function () {
-    network.setOptions( { physics: { enabled: false } } );
-});
+    const list = document.createElement('ul');
+    spawns.sort((a, b) => a.pokemonName.localeCompare(b.pokemonName)).forEach(spawn => {
+        const pokemonName = spawn.pokemonName.replace(/_/g, ' ');
+        const rarityClass = `rarity-tag rarity-${spawn.rarity}`;
+        const timeIcon = TIME_ICONS[spawn.time] || '❓';
+        
+        const listItem = document.createElement('li');
 
-biomeNamesSorted.forEach(biomeId => {
-    updateNodeAppearance(biomeId);
-});
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'pokemon-name';
+        nameSpan.textContent = pokemonName;
+        
+        const detailsSpan = document.createElement('span');
+        detailsSpan.className = 'spawn-details';
 
+        const raritySpan = document.createElement('span');
+        raritySpan.className = rarityClass;
+        raritySpan.textContent = spawn.rarity.replace(/_/g,' ');
+
+        const timeSpan = document.createElement('span');
+        timeSpan.textContent = timeIcon;
+
+        detailsSpan.appendChild(raritySpan);
+        detailsSpan.appendChild(timeSpan);
+        
+        listItem.appendChild(nameSpan);
+        listItem.appendChild(detailsSpan);
+
+        list.appendChild(listItem);
+    });
+    tooltipElement.appendChild(list);
+
+    return tooltipElement;
+}
+
+function initializeGraph() {
+    const nodeData = biomeNamesSorted.map(name => ({
+        id: name,
+        label: name.replace(/_/g, ' '),
+        title: createTooltipElement(name)
+    }));
+    nodes.add(nodeData);
+
+    const graphContainer = document.getElementById('graph-container');
+    const data = { nodes: nodes, edges: edges };
+
+    const options = {
+        layout: { randomSeed: 10 },
+        edges: {
+            smooth: { type: 'continuous', forceDirection: 'none', roundness: 0.2 },
+            font: { size: 10, align: 'middle' },
+            selfReference: { size: 20, angle: Math.PI / 4 }
+        },
+        physics: {
+            enabled: true,
+            barnesHut: {
+                gravitationalConstant: -25000, centralGravity: 0.25,
+                springLength: 180, springConstant: 0.05,
+                damping: 0.09, avoidOverlap: 0.6
+            },
+            stabilization: {
+                enabled: true, iterations: 1000, updateInterval: 25,
+                onlyDynamicEdges: false, fit: true
+            },
+            minVelocity: 0.75
+        },
+        interaction: {
+            tooltipDelay: 200, hideEdgesOnDrag: true,
+            dragNodes: true, zoomView: true, dragView: true
+        },
+        nodes: {
+            shape: 'box', margin: 10,
+            font: { face: 'Arial' },
+            borderWidth: 1.5
+        }
+    };
+    network = new vis.Network(graphContainer, data, options);
+
+    network.on("stabilizationIterationsDone", function () {
+        network.setOptions({ physics: { enabled: false } });
+    });
+
+    updateAllNodeStyles();
+}
 
 function resetGraphStyles() {
-    nodes.getIds().forEach(nodeId => {
-        updateNodeAppearance(nodeId);
-    });
+    updateAllNodeStyles();
     edges.getIds().forEach(edgeId => {
-        const edge = edges.get(edgeId);
         edges.update({
             id: edgeId,
             color: { color: '#cccccc', highlight:'#ababab' },
@@ -400,7 +455,8 @@ async function animatePath(pathSegments, animationStyle, isLoop = false, baseDel
         if (!segment || segment.length === 0) continue;
 
         if (segment.length === 1) {
-            applyNodeStyle(segment[0], animationStyle);
+            const { background, border, borderWidth } = animationStyle;
+            nodes.update({ id: segment[0], color: { background, border }, borderWidth });
             await new Promise(resolve => setTimeout(resolve, baseDelay / 2));
             continue;
         }
@@ -409,7 +465,8 @@ async function animatePath(pathSegments, animationStyle, isLoop = false, baseDel
             const u = segment[j];
             const v = segment[j+1];
 
-            applyNodeStyle(u, animationStyle);
+            const { background, border, borderWidth } = animationStyle;
+            nodes.update({ id: u, color: { background, border }, borderWidth });
             await new Promise(resolve => setTimeout(resolve, baseDelay / 2));
 
             const edgeToUpdate = edges.get({
@@ -428,14 +485,14 @@ async function animatePath(pathSegments, animationStyle, isLoop = false, baseDel
             }
             await new Promise(resolve => setTimeout(resolve, baseDelay / 2));
         }
-        applyNodeStyle(segment[segment.length-1], animationStyle);
+        const lastNode = segment[segment.length-1];
+        const { background, border, borderWidth } = animationStyle;
+        nodes.update({ id: lastNode, color: { background, border }, borderWidth });
     }
 }
 
 function getPermutations(array) {
-    if (array.length === 0) return [[]];
-    if (array.length === 1) return [[array[0]]];
-
+    if (array.length <= 1) return [array];
     const result = [];
     for (let i = 0; i < array.length; i++) {
         const currentElement = array[i];
@@ -477,23 +534,15 @@ function findShortestRoundTripFromNode(node, avoidNodesSet) {
 
         const currentLoopCost = pathToIntermediate.cost + pathFromIntermediate.cost;
 
-        if (currentLoopCost < minLoopCost) {
+        if (currentLoopCost > 0 && currentLoopCost < minLoopCost) {
             minLoopCost = currentLoopCost;
-            if (pathFromIntermediate.path.length > 0 && pathFromIntermediate.path[0] === intermediate) {
-                 bestLoopPath = [...pathToIntermediate.path, ...pathFromIntermediate.path.slice(1)];
-            } else {
-                 bestLoopPath = [...pathToIntermediate.path, ...pathFromIntermediate.path];
-            }
-            if (bestLoopPath.length < 2 && minLoopCost > 0) {
-                minLoopCost = Infinity;
-                bestLoopPath = [];
-            }
+            bestLoopPath = [...pathToIntermediate.path, ...pathFromIntermediate.path.slice(1)];
         }
     }
-    if (minLoopCost === Infinity || bestLoopPath.length < 2 || (bestLoopPath.length === 2 && bestLoopPath[0] !== bestLoopPath[1] && minLoopCost === 0 ) ) {
-        if (bestLoopPath.length < 2) return { path: [], cost: Infinity };
+    
+    if (minLoopCost === Infinity || bestLoopPath.length < 3) {
+        return { path: [], cost: Infinity };
     }
-
 
     return { path: bestLoopPath, cost: minLoopCost };
 }
@@ -613,24 +662,16 @@ async function findPathGreedy(startNode, effectiveTargetNodes, avoidNodesSet, st
     }
      statusDiv.innerHTML = statusHTML;
 
-    visitedTargetsOrder.forEach(tn => applyNodeStyle(tn, NODE_STYLES.TARGET));
-    applyNodeStyle(startNode, NODE_STYLES.START);
-    avoidNodesSet.forEach(an => applyNodeStyle(an, NODE_STYLES.AVOID));
+    updateAllNodeStyles();
 }
 
 function formatPathWithIntermediates(pathArray, journeyStartNode, targetNodesInSegment, isLoopPath = false) {
     if (!pathArray || pathArray.length === 0) return "";
 
-    const segmentStartNode = pathArray[0];
-    const segmentEndNode = pathArray[pathArray.length - 1];
-
     return pathArray.map((node, index) => {
         const nodeText = node.replace(/_/g, ' ');
-        let styleClass = "";
-
         const isJourneyStart = node === journeyStartNode && index === 0 && !isLoopPath;
         const isSegmentTarget = targetNodesInSegment.includes(node);
-
 
         if (isJourneyStart) {
             return `<span style="color: ${NODE_STYLES.START.background}; font-weight: bold;">${nodeText}</span>`;
@@ -782,22 +823,8 @@ async function findPathOptimal(startNode, effectiveTargetNodes, avoidNodesSet, s
         let loopCostDisplay = "0";
         if (bestPermutationDetails.loopSegment && bestPermutationDetails.loopSegment.path.length > 0 && bestPermutationDetails.loopSegment.cost !== Infinity) {
             loopCostDisplay = String(bestPermutationDetails.loopSegment.cost);
+            const loopTargetsContext = [bestPermutationDetails.permutation[0], bestPermutationDetails.permutation[bestPermutationDetails.permutation.length - 1]];
             
-            let loopTargetsContext = [];
-            const loopActualStart = bestPermutationDetails.loopSegment.path[0];
-            const loopActualEnd = bestPermutationDetails.loopSegment.path[bestPermutationDetails.loopSegment.path.length - 1];
-
-            const conceptualLoopStart = bestPermutationDetails.permutation[bestPermutationDetails.permutation.length - 1];
-            const conceptualLoopEnd = bestPermutationDetails.permutation[0];
-
-            if (loopActualStart === conceptualLoopStart) loopTargetsContext.push(conceptualLoopStart);
-            if (conceptualLoopEnd !== conceptualLoopStart && loopActualEnd === conceptualLoopEnd) {
-                 if (!loopTargetsContext.includes(conceptualLoopEnd)) loopTargetsContext.push(conceptualLoopEnd);
-            } else if (conceptualLoopEnd === conceptualLoopStart && !loopTargetsContext.includes(conceptualLoopEnd)) {
-                loopTargetsContext.push(conceptualLoopEnd);
-            }
-
-
             loopPathDisplay = formatPathWithIntermediates(
                 bestPermutationDetails.loopSegment.path,
                 startNode,
@@ -818,10 +845,7 @@ async function findPathOptimal(startNode, effectiveTargetNodes, avoidNodesSet, s
         }
     }
     statusDiv.innerHTML = statusHTML;
-
-    effectiveTargetNodes.forEach(tn => applyNodeStyle(tn, NODE_STYLES.TARGET));
-    applyNodeStyle(startNode, NODE_STYLES.START);
-    avoidNodesSet.forEach(an => applyNodeStyle(an, NODE_STYLES.AVOID));
+    updateAllNodeStyles();
 }
 
 
@@ -834,9 +858,6 @@ document.getElementById('findPathBtn').addEventListener('click', async () => {
     const startNode = startBiomeSelect.value;
     const targetNodesInput = Array.from(selectedTargetBiomes);
     const avoidNodesSet = new Set(selectedAvoidBiomes);
-
-    biomeNamesSorted.forEach(biomeId => updateNodeAppearance(biomeId));
-
 
     if (!startNode) {
         statusDiv.textContent = "Please select a start biome.";
@@ -851,12 +872,9 @@ document.getElementById('findPathBtn').addEventListener('click', async () => {
     const isOnlyStartNodeTarget = targetNodesInput.length === 0 || (targetNodesInput.length === 1 && targetNodesInput[0] === startNode);
 
     if (isOnlyStartNodeTarget) {
-        let actionDescription = "";
-        if (targetNodesInput.length === 0) {
-             actionDescription = `No targets selected. Assuming mandatory round trip from Start Node: <span style="color: ${NODE_STYLES.START.background}; font-weight: bold;">${startNode.replace(/_/g, ' ')}</span>.`;
-        } else {
-             actionDescription = `Start Node <span style="color: ${NODE_STYLES.START.background}; font-weight: bold;">${startNode.replace(/_/g, ' ')}</span> is the only target. Finding a mandatory round trip.`;
-        }
+        let actionDescription = (targetNodesInput.length === 0) 
+            ? `No targets selected. Assuming mandatory round trip from Start Node: <span style="color: ${NODE_STYLES.START.background}; font-weight: bold;">${startNode.replace(/_/g, ' ')}</span>.`
+            : `Start Node <span style="color: ${NODE_STYLES.START.background}; font-weight: bold;">${startNode.replace(/_/g, ' ')}</span> is the only target. Finding a mandatory round trip.`;
         statusHTML = actionDescription + "<br>";
 
         if (avoidNodesSet.size > 0) {
@@ -876,10 +894,7 @@ document.getElementById('findPathBtn').addEventListener('click', async () => {
             statusHTML += `<br>Cannot find a mandatory round trip from <span style="font-weight: bold;">${startNode.replace(/_/g, ' ')}</span> via another node.`;
             statusDiv.innerHTML = statusHTML;
         }
-        applyNodeStyle(startNode, NODE_STYLES.START);
-        avoidNodesSet.forEach(an => applyNodeStyle(an, NODE_STYLES.AVOID));
-        if (targetNodesInput.includes(startNode)) updateNodeAppearance(startNode);
-
+        updateAllNodeStyles();
         return;
     }
 
@@ -937,6 +952,7 @@ function populatePokemonList() {
                 item.classList.add('selected');
             }
             updateSelectedIndicator(selectedPokemon, selectedPokemonIndicator);
+            updateAllNodeStyles();
         });
         pokemonListContainer.appendChild(item);
     });
@@ -971,22 +987,34 @@ function handlePokemonSearch() {
     }
 }
 
-async function initializePokemonFeature() {
+async function initializeApp() {
     try {
         const response = await fetch('pokemon_spawn.json');
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         allPokemonData = await response.json();
+
+        for (const pokemonName in allPokemonData) {
+            const spawns = allPokemonData[pokemonName];
+            spawns.forEach(spawnInfo => {
+                const [biome, rarity, time] = spawnInfo;
+                if (!biomePokemonSpawns.has(biome)) {
+                    biomePokemonSpawns.set(biome, []);
+                }
+                biomePokemonSpawns.get(biome).push({ pokemonName, rarity, time });
+            });
+        }
         
         populatePokemonList();
         pokemonSearchInput.addEventListener('input', handlePokemonSearch);
         updateSelectedIndicator(selectedPokemon, selectedPokemonIndicator);
 
+        initializeGraph();
+
     } catch (error) {
         console.error("Could not load Pokémon data:", error);
         pokemonListContainer.innerHTML = 'Error loading Pokémon list.';
+        document.getElementById('graph-container').innerHTML = 'Error loading graph, Pokémon data is required.';
     }
 }
 
-initializePokemonFeature();
+initializeApp();

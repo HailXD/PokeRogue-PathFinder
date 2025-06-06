@@ -145,3 +145,65 @@ button#findPathBtn:hover {
 .highlight-target { color: #FF00FF; font-weight: bold; }
 .highlight-avoid { color: #6c757d; font-weight: bold; }
 .highlight-start { color: #00FFFF; font-weight: bold; }
+
+.vis-tooltip {
+    background-color: #fff !important;
+    border: 2px solid #000 !important;
+    border-radius: 6px !important;
+    padding: 10px !important;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+    max-width: 300px;
+    font-size: 14px;
+    color: #333;
+}
+
+.vis-tooltip h4 {
+    margin: 0 0 8px 0;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #eee;
+    color: #000;
+}
+
+.vis-tooltip ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.vis-tooltip li {
+    padding: 3px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.vis-tooltip .pokemon-name {
+    font-weight: bold;
+}
+
+.vis-tooltip .spawn-details {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.vis-tooltip .rarity-tag {
+    font-weight: bold;
+    font-size: 0.85em;
+    padding: 1px 4px;
+    border-radius: 3px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+    color: white;
+}
+
+.rarity-COMMON { background-color: #6890F0; }
+.rarity-UNCOMMON { background-color: #78C850; }
+.rarity-RARE { background-color: #F8D030; }
+.rarity-SUPER_RARE { background-color: #F08030; }
+.rarity-ULTRA_RARE { background-color: #A890F0; }
+.rarity-BOSS { background-color: #C03028; border: 1px solid #F8D030; }
+.rarity-BOSS_RARE { background-color: #C03028; border: 1px solid #A890F0; }
+.rarity-BOSS_SUPER_RARE { background-color: #C03028; border: 1px solid #A890F0; }
+.rarity-BOSS_ULTRA_RARE { background-color: #A8A878; border: 1px solid #A890F0; }
