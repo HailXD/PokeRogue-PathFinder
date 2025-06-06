@@ -740,7 +740,6 @@ async function findPathOptimal(startNode, effectiveTargetNodes, avoidNodesSet, s
     }
 
     statusHTML = initialStatusHTML;
-    statusHTML += `Finding optimal path for ${effectiveTargetNodes.length} target(s).<br>`;
     statusHTML += `Starting from: <span style="color: ${NODE_STYLES.START.background}; font-weight: bold;">${startNode.replace(/_/g, ' ')}</span><br>`;
     statusHTML += `Seeking targets: ${effectiveTargetNodes.map(t => `<span style="color: ${NODE_STYLES.TARGET.background}; font-weight: bold;">${t.replace(/_/g, ' ')}</span>`).join(', ')}.`;
      if (avoidNodesSet.size > 0) {
