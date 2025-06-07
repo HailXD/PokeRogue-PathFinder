@@ -10,10 +10,73 @@ import {
 } from "./main.js";
 import { resetGraphStyles } from "./graph.js";
 
+// Min-heap implementation for a Priority Queue
+class PriorityQueue {
+    constructor() {
+        this.heap = [];
+    }
+    enqueue(element, priority) {
+        this.heap.push({ element, priority });
+        this.bubbleUp();
+    }
+    bubbleUp() {
+        let index = this.heap.length - 1;
+        while (index > 0) {
+            const element = this.heap[index];
+            const parentIndex = Math.floor((index - 1) / 2);
+            const parent = this.heap[parentIndex];
+            if (parent.priority <= element.priority) break;
+            this.heap[index] = parent;
+            this.heap[parentIndex] = element;
+            index = parentIndex;
+        }
+    }
+    dequeue() {
+        if (this.isEmpty()) {
+            return undefined;
+        }
+        const min = this.heap[0];
+        const end = this.heap.pop();
+        if (this.heap.length > 0) {
+            this.heap[0] = end;
+            this.sinkDown(0);
+        }
+        return min;
+    }
+    sinkDown(index) {
+        const left = 2 * index + 1;
+        const right = 2 * index + 2;
+        let smallest = index;
+        const length = this.heap.length;
+        if (
+            left < length &&
+            this.heap[left].priority < this.heap[smallest].priority
+        ) {
+            smallest = left;
+        }
+        if (
+            right < length &&
+            this.heap[right].priority < this.heap[smallest].priority
+        ) {
+            smallest = right;
+        }
+        if (smallest !== index) {
+            [this.heap[index], this.heap[smallest]] = [
+                this.heap[smallest],
+                this.heap[index],
+            ];
+            this.sinkDown(smallest);
+        }
+    }
+    isEmpty() {
+        return this.heap.length === 0;
+    }
+}
+
 function dijkstra(startNode, endNode, avoidNodes = new Set()) {
     const distances = new Map();
     const prevNodes = new Map();
-    const pq = new Set();
+    const pq = new PriorityQueue();
 
     allBiomes.forEach((biome) => {
         distances.set(biome, Infinity);
@@ -21,24 +84,18 @@ function dijkstra(startNode, endNode, avoidNodes = new Set()) {
     });
 
     distances.set(startNode, 0);
-    pq.add([0, startNode]);
+    pq.enqueue(startNode, 0);
 
-    while (pq.size > 0) {
-        let u = null;
-        let minDist = Infinity;
-        for (const item of pq) {
-            if (item[0] < minDist) {
-                minDist = item[0];
-                u = item[1];
-            }
+    while (!pq.isEmpty()) {
+        const dequeued = pq.dequeue();
+        if (!dequeued) break;
+        const { element: u, priority: u_dist } = dequeued;
+
+        if (u_dist > distances.get(u)) {
+            continue;
         }
 
-        if (u === null) break;
-
-        let toRemoveFromPq;
-        for (const item of pq)
-            if (item[1] === u && item[0] === minDist) toRemoveFromPq = item;
-        pq.delete(toRemoveFromPq);
+        if (u === endNode) break;
 
         if (avoidNodes.has(u) && u !== startNode && u !== endNode) continue;
 
@@ -51,13 +108,7 @@ function dijkstra(startNode, endNode, avoidNodes = new Set()) {
             if (alt < distances.get(v)) {
                 distances.set(v, alt);
                 prevNodes.set(v, u);
-
-                let vToRemoveFromPq;
-                for (const item of pq)
-                    if (item[1] === v) vToRemoveFromPq = item;
-                if (vToRemoveFromPq) pq.delete(vToRemoveFromPq);
-
-                pq.add([alt, v]);
+                pq.enqueue(v, alt);
             }
         }
     }
@@ -298,6 +349,35 @@ function formatPathWithIntermediates(
         .join(" → ");
 }
 
+function findNearestNeighborPath(startNode, targetNodes, pathCache) {
+    const unvisited = new Set(targetNodes);
+    const permutation = [];
+    let lastNode = startNode;
+
+    while (unvisited.size > 0) {
+        let nearestTarget = null;
+        let minCost = Infinity;
+
+        for (const target of unvisited) {
+            const key = `${lastNode}->${target}`;
+            const segment = pathCache.get(key);
+            if (segment.cost < minCost) {
+                minCost = segment.cost;
+                nearestTarget = target;
+            }
+        }
+
+        if (nearestTarget) {
+            permutation.push(nearestTarget);
+            unvisited.delete(nearestTarget);
+            lastNode = nearestTarget;
+        } else {
+            break;
+        }
+    }
+    return permutation;
+}
+
 async function findPathOptimal(
     startNode,
     effectiveTargetNodes,
@@ -328,12 +408,16 @@ async function findPathOptimal(
             )
             .join(", ")}.`;
     }
-    statusHTML += "<br><br>Calculating optimal paths...";
+    statusHTML += "<br><br>";
     statusDiv.innerHTML = statusHTML;
     await new Promise((resolve) => setTimeout(resolve, 10));
 
     const pathCache = new Map();
     const nodesForPathCalc = [startNode, ...effectiveTargetNodes];
+
+    statusHTML += "Calculating paths between targets...<br>";
+    statusDiv.innerHTML = statusHTML;
+    await new Promise((resolve) => setTimeout(resolve, 10));
 
     for (const nodeA of nodesForPathCalc) {
         for (const nodeB of nodesForPathCalc) {
@@ -348,10 +432,21 @@ async function findPathOptimal(
         }
     }
 
+    const MAX_TARGETS_FOR_OPTIMAL = 8;
+    let permutations;
+
+    if (effectiveTargetNodes.length > MAX_TARGETS_FOR_OPTIMAL) {
+        statusHTML += `Finding best path for ${effectiveTargetNodes.length} targets using a fast heuristic...<br>`;
+        permutations = [
+            findNearestNeighborPath(startNode, effectiveTargetNodes, pathCache),
+        ];
+    } else {
+        statusHTML += `Calculating optimal path for ${effectiveTargetNodes.length} targets...<br>`;
+        permutations = getPermutations(effectiveTargetNodes);
+    }
     statusDiv.innerHTML = statusHTML;
     await new Promise((resolve) => setTimeout(resolve, 10));
 
-    const permutations = getPermutations(effectiveTargetNodes);
     let minTotalCost = Infinity;
     let bestPermutationDetails = null;
 
@@ -711,12 +806,6 @@ export async function findPath(
         statusHTML += `Error: No valid targets to route to after filtering. `;
         statusDiv.innerHTML = statusHTML;
         return;
-    }
-
-    const MAX_TARGETS_FOR_OPTIMAL_WARNING = 8;
-
-    if (effectiveTargetNodes.length > MAX_TARGETS_FOR_OPTIMAL_WARNING) {
-        statusHTML += `Warning: Calculating optimal path for ${effectiveTargetNodes.length} targets may be slow.<br>`;
     }
 
     await findPathOptimal(
