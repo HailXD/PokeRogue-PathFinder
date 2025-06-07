@@ -137,7 +137,6 @@ let persistentPathNodeIds = new Set();
 let persistentPathEdgeIds = new Set();
 let persistentLoopEdgeIds = new Set();
 
-
 const pokemonSearchInput = document.getElementById("pokemonSearch");
 const pokemonListContainer = document.getElementById("pokemonListContainer");
 const selectedPokemonIndicator = document.getElementById(
@@ -231,10 +230,14 @@ function updateAllNodeStyles() {
             font: {
                 color: style.fontColor,
                 size: style.fontSize,
-                bold: style.bold || isOnPath,
+                bold: style.bold,
             },
             borderWidth: style.borderWidth,
         };
+
+        if (isOnPath) {
+            nodeUpdate.font.bold = true;
+        }
 
         if (isPokemonSpawn) {
             nodeUpdate.color.border =
@@ -250,7 +253,6 @@ function updateAllNodeStyles() {
         nodes.update(updates);
     }
 }
-
 
 function createMultiSelectItems(containerId, selectedSet, indicatorId) {
     const container = document.getElementById(containerId);
@@ -691,6 +693,7 @@ function resetGraphStyles() {
     const isDark = document.body.classList.contains("dark-theme");
     const edgeColor = isDark ? "#555" : "#cccccc";
     const highlightColor = isDark ? "#777" : "#ababab";
+    const fontColor = isDark ? "#999" : "#777777";
 
     const pathEdgeStyle = {
         color: "#79B6FF",
@@ -703,31 +706,34 @@ function resetGraphStyles() {
         width: 2.5,
     };
 
-    const edgeUpdates = edges.getIds().map(edgeId => {
+    const edgeUpdates = edges.getIds().map((edgeId) => {
+        const update = {
+            id: edgeId,
+            font: { color: fontColor },
+        };
+
         if (persistentLoopEdgeIds.has(edgeId)) {
-            return {
-                id: edgeId,
-                color: { color: loopEdgeStyle.color, highlight: highlightColor },
-                width: loopEdgeStyle.width,
-                dashes: loopEdgeStyle.dashes,
+            update.color = {
+                color: loopEdgeStyle.color,
+                highlight: highlightColor,
             };
+            update.width = loopEdgeStyle.width;
+            update.dashes = loopEdgeStyle.dashes;
         } else if (persistentPathEdgeIds.has(edgeId)) {
-            return {
-                id: edgeId,
-                color: { color: pathEdgeStyle.color, highlight: highlightColor },
-                width: pathEdgeStyle.width,
-                dashes: pathEdgeStyle.dashes,
+            update.color = {
+                color: pathEdgeStyle.color,
+                highlight: highlightColor,
             };
+            update.width = pathEdgeStyle.width;
+            update.dashes = pathEdgeStyle.dashes;
         } else {
-            return {
-                id: edgeId,
-                color: { color: edgeColor, highlight: highlightColor },
-                width: 1,
-                dashes: false,
-            };
+            update.color = { color: edgeColor, highlight: highlightColor };
+            update.width = 1;
+            update.dashes = false;
         }
+        return update;
     });
-    
+
     if (edgeUpdates.length > 0) {
         edges.update(edgeUpdates);
     }
@@ -809,7 +815,9 @@ async function animatePath(pathSegments, animationStyle, options = {}) {
                         id: edge.id,
                         color: {
                             color: isLoop ? "red" : animationStyle.background,
-                            highlight: isLoop ? "red" : animationStyle.background,
+                            highlight: isLoop
+                                ? "red"
+                                : animationStyle.background,
                         },
                         width: 3.5,
                         dashes: isLoop ? [5, 5] : false,
@@ -1097,7 +1105,7 @@ async function findPathGreedy(
                     NODE_STYLES.LOOP_ANIMATION,
                     {
                         isLoop: true,
-                        baseDelay: 300,
+                        baseDelay: 200,
                         startNode: startNode,
                         targetNodes: styleOptions.allTargetNodes,
                         pokemonSpawnNodes: styleOptions.pokemonSpawnNodes,
@@ -1153,18 +1161,21 @@ async function findPathGreedy(
     } else if (effectiveTargetNodes.length > 0) {
         statusHTML += `<br><br>Could not reach any of the specified targets.`;
     }
-    
-    pathSegments.forEach(segment => {
-        segment.forEach(node => persistentPathNodeIds.add(node));
-        getEdgeIdsForPath(segment).forEach(id => persistentPathEdgeIds.add(id)); 
+
+    pathSegments.forEach((segment) => {
+        segment.forEach((node) => persistentPathNodeIds.add(node));
+        getEdgeIdsForPath(segment).forEach((id) =>
+            persistentPathEdgeIds.add(id)
+        );
     });
-    finalLoopPath.forEach(node => persistentPathNodeIds.add(node));
-    getEdgeIdsForPath(finalLoopPath).forEach(id => persistentLoopEdgeIds.add(id));
+    finalLoopPath.forEach((node) => persistentPathNodeIds.add(node));
+    getEdgeIdsForPath(finalLoopPath).forEach((id) =>
+        persistentLoopEdgeIds.add(id)
+    );
 
     statusDiv.innerHTML = statusHTML;
     resetGraphStyles();
 }
-
 
 function formatPathWithIntermediates(
     pathArray,
@@ -1201,7 +1212,6 @@ async function findPathOptimal(
     styleOptions
 ) {
     let statusHTML = initialStatusHTML;
-    const MAX_TARGETS_FOR_OPTIMAL = 8;
     statusHTML += `Starting from: <span class="highlight-start">${startNode.replace(
         /_/g,
         " "
@@ -1356,13 +1366,22 @@ async function findPathOptimal(
     if (!bestPermutationDetails) {
         statusHTML += `No complete path visiting all targets and looping back could be found.`;
     } else {
-        bestPermutationDetails.segments.forEach(seg => {
-            seg.forEach(node => persistentPathNodeIds.add(node));
-            getEdgeIdsForPath(seg).forEach(id => persistentPathEdgeIds.add(id));
+        bestPermutationDetails.segments.forEach((seg) => {
+            seg.forEach((node) => persistentPathNodeIds.add(node));
+            getEdgeIdsForPath(seg).forEach((id) =>
+                persistentPathEdgeIds.add(id)
+            );
         });
-        if (bestPermutationDetails.loopSegment && bestPermutationDetails.loopSegment.path) {
-            bestPermutationDetails.loopSegment.path.forEach(node => persistentPathNodeIds.add(node));
-            getEdgeIdsForPath(bestPermutationDetails.loopSegment.path).forEach(id => persistentLoopEdgeIds.add(id));
+        if (
+            bestPermutationDetails.loopSegment &&
+            bestPermutationDetails.loopSegment.path
+        ) {
+            bestPermutationDetails.loopSegment.path.forEach((node) =>
+                persistentPathNodeIds.add(node)
+            );
+            getEdgeIdsForPath(bestPermutationDetails.loopSegment.path).forEach(
+                (id) => persistentLoopEdgeIds.add(id)
+            );
         }
 
         const pathCostWithoutLoop =
@@ -1395,7 +1414,7 @@ async function findPathOptimal(
                 lastNodeOfPreviousSegment = segmentPath[segmentPath.length - 1];
         });
 
-        statusHTML += `<b>Optimal Path:\n</b>${fullOptimalPathDisplay}<br>`;
+        statusHTML += `<b>Optimal Path:<br></b>${fullOptimalPathDisplay}<br>`;
         statusHTML += `<b>Cost:</b> ${pathCostWithoutLoop}<br><br>`;
 
         let loopPathDisplay = "N/A";
@@ -1421,7 +1440,7 @@ async function findPathOptimal(
             );
         }
 
-        statusHTML += `<b>Optimal Loop Path:\n</b>${loopPathDisplay}<br>`;
+        statusHTML += `<b>Optimal Loop Path:<br></b>${loopPathDisplay}<br>`;
         statusHTML += `<b>Loop Cost:</b> ${loopCostDisplay}<br><br>`;
         statusHTML += `<b>Total Optimal Cost:</b> ${bestPermutationDetails.totalCost}<br>`;
 
@@ -1540,8 +1559,12 @@ document.getElementById("findPathBtn").addEventListener("click", async () => {
         );
 
         if (roundTripData.cost !== Infinity && roundTripData.path.length > 0) {
-            roundTripData.path.forEach(node => persistentPathNodeIds.add(node));
-            getEdgeIdsForPath(roundTripData.path).forEach(id => persistentLoopEdgeIds.add(id));
+            roundTripData.path.forEach((node) =>
+                persistentPathNodeIds.add(node)
+            );
+            getEdgeIdsForPath(roundTripData.path).forEach((id) =>
+                persistentLoopEdgeIds.add(id)
+            );
 
             statusHTML += `<br><b>Mandatory Round Trip:</b> ${formatPathWithIntermediates(
                 roundTripData.path,
@@ -1741,20 +1764,10 @@ function applyTheme(theme) {
     document.body.classList.toggle("dark-theme", isDark);
     themeToggleBtn.textContent = isDark ? "☀️" : "🌙";
 
-    if (network && edges) {
-        const edgeColor = isDark ? "#555" : "#cccccc";
-        const highlightColor = isDark ? "#777" : "#ababab";
-        const fontColor = isDark ? "#999" : "#777777";
-
-        const edgeUpdates = edges.getIds().map((id) => ({
-            id: id,
-            color: { color: edgeColor, highlight: highlightColor },
-            font: { color: fontColor },
-        }));
-
-        if (edgeUpdates.length > 0) {
-            edges.update(edgeUpdates);
-        }
+    if (network) {
+        // This function handles all node and edge style updates correctly
+        // according to the new theme and any persistent path styles.
+        resetGraphStyles();
     }
 }
 
