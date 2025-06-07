@@ -151,7 +151,6 @@ function initializeEventListeners() {
     const findPathBtn = document.getElementById("findPathBtn");
     const themeToggleBtn = document.getElementById("theme-toggle");
 
-    let previousStartNode = startBiomeSelect.value;
 
     biomeNamesSorted.forEach((biome) => {
         const option = new Option(biome.replace(/_/g, " "), biome);
@@ -187,7 +186,6 @@ function initializeEventListeners() {
             );
         }
 
-        previousStartNode = newStartNode;
         updateAllNodeStyles();
     });
 

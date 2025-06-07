@@ -1,0 +1,189 @@
+body {
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f0f0f0;
+    height: 100vh;
+    display: flex;
+    overflow: hidden;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.page-container {
+    display: flex;
+    width: 100%;
+    height: 100%;
+}
+
+.controls-panel {
+    width: 350px;
+    padding: 20px;
+    background-color: #fff;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+@media (max-width: 768px) {
+    .controls-panel {
+        width: 90%;
+        position: fixed;
+        bottom: 0;
+        top: 0;
+        left: 0;
+        z-index: 1000;
+        box-shadow: none;
+    }
+
+    #graph-container {
+        display: none;
+    }
+    
+    #pokemonSearchContainer {
+        display: none;
+    }
+
+    .status::after {
+        content: "(PC Only)";
+        font-size: 0.8em;
+        color: #ff0000;
+    }
+}
+
+.graph-panel {
+    flex-grow: 1;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+#graph-container {
+    width: 100%;
+    height: 100%;
+    border: 1px solid #ccc;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    transition: background-color 0.3s, border-color 0.3s;
+}
+
+.control-group {
+    margin-bottom: 15px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #333;
+    transition: color 0.3s;
+}
+
+select,
+button#findPathBtn,
+input[type="search"] {
+    width: 100%;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+    font-size: 16px;
+    transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+}
+
+input[type="search"] {
+    margin-bottom: 5px;
+}
+
+button#findPathBtn {
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 10px;
+}
+
+button#findPathBtn:hover {
+    background-color: #0056b3;
+}
+
+.status {
+    padding: 15px;
+    background-color: #e9ecef;
+    border-radius: 4px;
+    color: #495057;
+    text-align: center;
+    font-size: 0.9em;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+#theme-toggle {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: none;
+    background-color: #333;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 1001;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.3s, color 0.3s, transform 0.3s;
+}
+
+#theme-toggle:hover {
+    background-color: #555;
+    transform: scale(1.1);
+}
+
+body.dark-theme {
+    background-color: #121212;
+    color: #e0e0e0;
+}
+
+body.dark-theme .controls-panel {
+    background-color: #1e1e1e;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
+}
+
+body.dark-theme .graph-panel #graph-container {
+    background-color: #2a2a2a;
+    border-color: #444;
+}
+
+body.dark-theme .control-group label {
+    color: #e0e0e0;
+}
+
+body.dark-theme select,
+body.dark-theme input[type="search"] {
+    background-color: #333;
+    color: #e0e0e0;
+    border-color: #555;
+}
+
+body.dark-theme .status {
+    background-color: #333;
+    color: #ccc;
+}
+
+body.dark-theme #theme-toggle {
+    background-color: #f0f0f0;
+    color: #333;
+}
+
+body.dark-theme #theme-toggle:hover {
+    background-color: #ddd;
+}
