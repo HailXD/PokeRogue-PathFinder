@@ -332,7 +332,6 @@ function findShortestRoundTripFromNode(node, avoidNodesSet) {
     return { path: bestLoopPath, cost: minLoopCost };
 }
 
-
 function formatPathWithIntermediates(
     pathArray,
     journeyStartNode,
@@ -815,4 +814,3 @@ export async function findPath(
         styleOptions
     );
 }
-
