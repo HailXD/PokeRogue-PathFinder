@@ -41,6 +41,31 @@
                     <select id="startBiome"></select>
                 </div>
 
+                <div class="control-group" id="pokemonSearchContainer">
+                    <label for="pokemonSearch">Find Pokémon:</label>
+                    <input
+                        type="search"
+                        id="pokemonSearch"
+                        placeholder="Search for a Pokémon..."
+                    />
+                    <div
+                        id="pokemonListContainer"
+                        class="multi-select-container"
+                    ></div>
+                    <div class="control-group">
+                        <input type="checkbox" id="includePokemonInTarget" />
+                        <label for="includePokemonInTarget"
+                            >Include Pokemon in target?</label
+                        >
+                    </div>
+                    <div
+                        id="selectedPokemonIndicator"
+                        class="selected-indicator-container"
+                    >
+                        Nothing selected
+                    </div>
+                </div>
+                
                 <div class="control-group">
                     <label for="targetBiomesContainer"
                         >Target Biomes (Click to select/deselect):</label
@@ -77,31 +102,6 @@
                     ></div>
                     <div
                         id="selectedAvoidIndicator"
-                        class="selected-indicator-container"
-                    >
-                        Nothing selected
-                    </div>
-                </div>
-
-                <div class="control-group" id="pokemonSearchContainer">
-                    <label for="pokemonSearch">Find Pokémon:</label>
-                    <input
-                        type="search"
-                        id="pokemonSearch"
-                        placeholder="Search for a Pokémon..."
-                    />
-                    <div
-                        id="pokemonListContainer"
-                        class="multi-select-container"
-                    ></div>
-                    <div class="control-group">
-                        <input type="checkbox" id="includePokemonInTarget" />
-                        <label for="includePokemonInTarget"
-                            >Include Pokemon in target?</label
-                        >
-                    </div>
-                    <div
-                        id="selectedPokemonIndicator"
                         class="selected-indicator-container"
                     >
                         Nothing selected
