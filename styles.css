@@ -28,7 +28,7 @@ body {
 
 @media (max-width: 768px) {
     .controls-panel {
-        width: 85%;
+        width: 90%;
         position: fixed;
         bottom: 0;
         top: 0;
@@ -43,6 +43,12 @@ body {
     
     #pokemonSearchContainer {
         display: none;
+    }
+
+    .status::after {
+        content: "(PC Only)";
+        font-size: 0.8em;
+        color: #ff0000;
     }
 }
 
