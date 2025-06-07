@@ -7,6 +7,7 @@ import {
     initializeModal,
     applyTheme,
     toggleTheme,
+    createTooltipElement,
 } from "./ui.js";
 import { initializeGraph, resetGraphStyles } from "./graph.js";
 import { findPath } from "./pathfinding.js";
@@ -143,6 +144,12 @@ export function handlePokemonSelectionChange() {
         { onPokemonChange: handlePokemonSelectionChange }
     );
     updateTargetBiomesFromPokemon();
+    nodes.update(
+        nodes.get().map((node) => ({
+            id: node.id,
+            title: createTooltipElement(node.id),
+        }))
+    );
 }
 
 function updateTargetBiomesFromPokemon() {
