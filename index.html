@@ -1,80 +1,119 @@
 <!DOCTYPE html>
 
 <html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Biome Pathfinder</title>
+        <link rel="icon" href="favicon.png" type="image/png" />
+        <script
+            type="text/javascript"
+            src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"
+        ></script>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"
+            rel="stylesheet"
+        />
+        <link rel="stylesheet" href="css/base.css" />
+        <link rel="stylesheet" href="css/components.css" />
+        <link rel="stylesheet" href="css/graph.css" />
+    </head>
 
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Biome Pathfinder</title>
-    <link rel="icon" href="favicon.png" type="image/png">
-    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/base.css" />
-    <link rel="stylesheet" href="css/components.css" />
-    <link rel="stylesheet" href="css/graph.css" />
-</head>
+    <body>
+        <div class="page-container">
+            <div class="controls-panel">
+                <h1>Biome Pathfinder</h1>
 
-<body>
-    <div class="page-container">
-        <div class="controls-panel">
-            <h1>Biome Pathfinder</h1>
-
-            <div id="status" class="status">
-                Select biomes and click "Find Path" or <br> Search for Pokemon to highlight their biomes.
-            </div>
-            <div class="control-group">
-                <label for="startBiome">Start Biome:</label>
-                <select id="startBiome"></select>
-            </div>
-
-            <div class="control-group">
-                <label for="targetBiomesContainer">Target Biomes (Click to select/deselect):</label>
-                <input type="search" id="targetBiomeSearch" placeholder="Search target biomes..." />
-                <div id="targetBiomesContainer" class="multi-select-container"></div>
-                <div id="selectedTargetsIndicator" class="selected-indicator-container">
-                    Nothing selected
+                <div id="status" class="status">
+                    Select biomes and click "Find Path" or <br />
+                    Search for Pokemon to highlight their biomes.
                 </div>
-            </div>
-
-            <div class="control-group">
-                <label for="avoidBiomesContainer">Avoid Biomes (Click to select/deselect):</label>
-                <input type="search" id="avoidBiomeSearch" placeholder="Search biomes to avoid..." />
-                <div id="avoidBiomesContainer" class="multi-select-container"></div>
-                <div id="selectedAvoidIndicator" class="selected-indicator-container">
-                    Nothing selected
+                <div class="control-group">
+                    <label for="startBiome">Start Biome:</label>
+                    <select id="startBiome"></select>
                 </div>
-            </div>
 
-            <div class="control-group" id="pokemonSearchContainer">
-                <label for="pokemonSearch">Find Pokémon:</label>
-                <input type="search" id="pokemonSearch" placeholder="Search for a Pokémon..." />
-                <div id="pokemonListContainer" class="multi-select-container"></div>
-                <div id="selectedPokemonIndicator" class="selected-indicator-container">
-                    Nothing selected
+                <div class="control-group">
+                    <label for="targetBiomesContainer"
+                        >Target Biomes (Click to select/deselect):</label
+                    >
+                    <input
+                        type="search"
+                        id="targetBiomeSearch"
+                        placeholder="Search target biomes..."
+                    />
+                    <div
+                        id="targetBiomesContainer"
+                        class="multi-select-container"
+                    ></div>
+                    <div
+                        id="selectedTargetsIndicator"
+                        class="selected-indicator-container"
+                    >
+                        Nothing selected
+                    </div>
                 </div>
+
+                <div class="control-group">
+                    <label for="avoidBiomesContainer"
+                        >Avoid Biomes (Click to select/deselect):</label
+                    >
+                    <input
+                        type="search"
+                        id="avoidBiomeSearch"
+                        placeholder="Search biomes to avoid..."
+                    />
+                    <div
+                        id="avoidBiomesContainer"
+                        class="multi-select-container"
+                    ></div>
+                    <div
+                        id="selectedAvoidIndicator"
+                        class="selected-indicator-container"
+                    >
+                        Nothing selected
+                    </div>
+                </div>
+
+                <div class="control-group" id="pokemonSearchContainer">
+                    <label for="pokemonSearch">Find Pokémon:</label>
+                    <input
+                        type="search"
+                        id="pokemonSearch"
+                        placeholder="Search for a Pokémon..."
+                    />
+                    <div
+                        id="pokemonListContainer"
+                        class="multi-select-container"
+                    ></div>
+                    <div
+                        id="selectedPokemonIndicator"
+                        class="selected-indicator-container"
+                    >
+                        Nothing selected
+                    </div>
+                </div>
+
+                <button id="findPathBtn">Find Path</button>
             </div>
 
-            <button id="findPathBtn">Find Path</button>
+            <div class="graph-panel">
+                <div id="graph-container"></div>
+            </div>
         </div>
 
-        <div class="graph-panel">
-            <div id="graph-container"></div>
+        <div id="pokemon-modal" class="modal">
+            <div class="modal-content">
+                <span class="modal-close-btn">×</span>
+                <h3 id="modal-biome-name">Biome Spawns</h3>
+                <div id="modal-pokemon-list-container"></div>
+            </div>
         </div>
-    </div>
 
-    <div id="pokemon-modal" class="modal">
-        <div class="modal-content">
-            <span class="modal-close-btn">×</span>
-            <h3 id="modal-biome-name">Biome Spawns</h3>
-            <div id="modal-pokemon-list-container"></div>
-        </div>
-    </div>
+        <button id="theme-toggle" title="Toggle dark/light theme">🌙</button>
 
-    <button id="theme-toggle" title="Toggle dark/light theme">🌙</button>
-
-    <script type="module" src="js/main.js"></script>
-</body>
-
+        <script type="module" src="js/main.js"></script>
+    </body>
 </html>

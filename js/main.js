@@ -6,7 +6,7 @@ import {
     handleSearch,
     initializeModal,
     applyTheme,
-    toggleTheme
+    toggleTheme,
 } from "./ui.js";
 import { initializeGraph, resetGraphStyles } from "./graph.js";
 import { findPath } from "./pathfinding.js";
@@ -131,26 +131,24 @@ export function updateAllNodeStyles() {
     }
 }
 
-
 function initializeEventListeners() {
     const pokemonSearchInput = document.getElementById("pokemonSearch");
-    const pokemonListContainer = document.getElementById("pokemonListContainer");
+    const pokemonListContainer = document.getElementById(
+        "pokemonListContainer"
+    );
     const selectedPokemonIndicator = document.getElementById(
         "selectedPokemonIndicator"
     );
-    const targetBiomeSearchInput =
-        document.getElementById("targetBiomeSearch");
+    const targetBiomeSearchInput = document.getElementById("targetBiomeSearch");
     const targetBiomesContainer = document.getElementById(
         "targetBiomesContainer"
     );
-    const avoidBiomeSearchInput =
-        document.getElementById("avoidBiomeSearch");
+    const avoidBiomeSearchInput = document.getElementById("avoidBiomeSearch");
     const avoidBiomesContainer = document.getElementById(
         "avoidBiomesContainer"
     );
     const findPathBtn = document.getElementById("findPathBtn");
     const themeToggleBtn = document.getElementById("theme-toggle");
-
 
     biomeNamesSorted.forEach((biome) => {
         const option = new Option(biome.replace(/_/g, " "), biome);
@@ -204,11 +202,19 @@ function initializeEventListeners() {
         if (selectedPokemon.size > 0) {
             selectedPokemon.forEach((pokemonName) => {
                 const spawns = allPokemonData[pokemonName] || [];
-                spawns.forEach((spawnInfo) => pokemonSpawnNodes.add(spawnInfo[0]));
+                spawns.forEach((spawnInfo) =>
+                    pokemonSpawnNodes.add(spawnInfo[0])
+                );
             });
         }
 
-        await findPath(startNode, targetNodesInput, avoidNodesSet, pokemonSpawnNodes, selectedTargetBiomes);
+        await findPath(
+            startNode,
+            targetNodesInput,
+            avoidNodesSet,
+            pokemonSpawnNodes,
+            selectedTargetBiomes
+        );
     });
 
     pokemonSearchInput.addEventListener("input", () =>
@@ -263,7 +269,8 @@ async function initializeApp() {
         resetGraphStyles();
     } catch (error) {
         console.error("Could not load Pokémon data:", error);
-        document.getElementById("pokemonListContainer").innerHTML = "Error loading Pokémon list.";
+        document.getElementById("pokemonListContainer").innerHTML =
+            "Error loading Pokémon list.";
         document.getElementById("graph-container").innerHTML =
             "Error loading graph, Pokémon data is required.";
     }

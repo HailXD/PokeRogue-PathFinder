@@ -223,7 +223,9 @@ export function createPokemonListElement(spawns, listType) {
 }
 
 export function populatePokemonList() {
-    const pokemonListContainer = document.getElementById("pokemonListContainer");
+    const pokemonListContainer = document.getElementById(
+        "pokemonListContainer"
+    );
     const selectedPokemonIndicator = document.getElementById(
         "selectedPokemonIndicator"
     );

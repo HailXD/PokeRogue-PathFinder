@@ -836,7 +836,13 @@ async function findPathOptimal(
     resetGraphStyles();
 }
 
-export async function findPath(startNode, targetNodesInput, avoidNodesSet, pokemonSpawnNodes, allTargetNodes) {
+export async function findPath(
+    startNode,
+    targetNodesInput,
+    avoidNodesSet,
+    pokemonSpawnNodes,
+    allTargetNodes
+) {
     const statusDiv = document.getElementById("status");
     statusDiv.innerHTML = "Processing...";
     let statusHTML = "";
