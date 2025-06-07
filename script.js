@@ -133,6 +133,10 @@ let previousStartNode = startBiomeSelect.value;
 const selectedTargetBiomes = new Set();
 const selectedAvoidBiomes = new Set();
 const selectedPokemon = new Set();
+let persistentPathNodeIds = new Set();
+let persistentPathEdgeIds = new Set();
+let persistentLoopEdgeIds = new Set();
+
 
 const pokemonSearchInput = document.getElementById("pokemonSearch");
 const pokemonListContainer = document.getElementById("pokemonListContainer");
@@ -214,6 +218,7 @@ function updateAllNodeStyles() {
         const isTarget = selectedTargetBiomes.has(nodeId);
         const isAvoid = selectedAvoidBiomes.has(nodeId);
         const isPokemonSpawn = pokemonSpawnBiomes.has(nodeId);
+        const isOnPath = persistentPathNodeIds.has(nodeId);
 
         let style = NODE_STYLES.DEFAULT;
         if (isStart) style = NODE_STYLES.START;
@@ -226,7 +231,7 @@ function updateAllNodeStyles() {
             font: {
                 color: style.fontColor,
                 size: style.fontSize,
-                bold: style.bold,
+                bold: style.bold || isOnPath,
             },
             borderWidth: style.borderWidth,
         };
@@ -245,6 +250,7 @@ function updateAllNodeStyles() {
         nodes.update(updates);
     }
 }
+
 
 function createMultiSelectItems(containerId, selectedSet, indicatorId) {
     const container = document.getElementById(containerId);
@@ -681,17 +687,50 @@ function initializeGraph() {
 
 function resetGraphStyles() {
     updateAllNodeStyles();
+
     const isDark = document.body.classList.contains("dark-theme");
     const edgeColor = isDark ? "#555" : "#cccccc";
     const highlightColor = isDark ? "#777" : "#ababab";
-    edges.getIds().forEach((edgeId) => {
-        edges.update({
-            id: edgeId,
-            color: { color: edgeColor, highlight: highlightColor },
-            width: 1,
-            dashes: false,
-        });
+
+    const pathEdgeStyle = {
+        color: "#79B6FF",
+        width: 2.5,
+        dashes: false,
+    };
+    const loopEdgeStyle = {
+        color: "red",
+        dashes: [5, 5],
+        width: 2.5,
+    };
+
+    const edgeUpdates = edges.getIds().map(edgeId => {
+        if (persistentLoopEdgeIds.has(edgeId)) {
+            return {
+                id: edgeId,
+                color: { color: loopEdgeStyle.color, highlight: highlightColor },
+                width: loopEdgeStyle.width,
+                dashes: loopEdgeStyle.dashes,
+            };
+        } else if (persistentPathEdgeIds.has(edgeId)) {
+            return {
+                id: edgeId,
+                color: { color: pathEdgeStyle.color, highlight: highlightColor },
+                width: pathEdgeStyle.width,
+                dashes: pathEdgeStyle.dashes,
+            };
+        } else {
+            return {
+                id: edgeId,
+                color: { color: edgeColor, highlight: highlightColor },
+                width: 1,
+                dashes: false,
+            };
+        }
     });
+    
+    if (edgeUpdates.length > 0) {
+        edges.update(edgeUpdates);
+    }
 }
 
 async function animatePath(pathSegments, animationStyle, options = {}) {
@@ -769,8 +808,8 @@ async function animatePath(pathSegments, animationStyle, options = {}) {
                     edges.update({
                         id: edge.id,
                         color: {
-                            color: animationStyle.background,
-                            highlight: animationStyle.background,
+                            color: isLoop ? "red" : animationStyle.background,
+                            highlight: isLoop ? "red" : animationStyle.background,
                         },
                         width: 3.5,
                         dashes: isLoop ? [5, 5] : false,
@@ -796,6 +835,21 @@ function getPermutations(array) {
         }
     }
     return result;
+}
+
+function getEdgeIdsForPath(path) {
+    const ids = new Set();
+    if (!path || path.length < 2) return Array.from(ids);
+
+    for (let i = 0; i < path.length - 1; i++) {
+        const u = path[i];
+        const v = path[i + 1];
+        const foundEdges = edges.get({
+            filter: (item) => item.from === u && item.to === v,
+        });
+        foundEdges.forEach((edge) => ids.add(edge.id));
+    }
+    return Array.from(ids);
 }
 
 function findShortestRoundTripFromNode(node, avoidNodesSet) {
@@ -904,6 +958,7 @@ async function findPathGreedy(
     let totalCost = 0;
     let pathPossible = true;
     let firstVisitedTarget = null;
+    let finalLoopPath = [];
 
     while (remainingTargets.size > 0) {
         let bestPathToNextTarget = { path: [], cost: Infinity };
@@ -1027,6 +1082,7 @@ async function findPathGreedy(
                 roundTripData.cost !== Infinity &&
                 roundTripData.path.length > 0
             ) {
+                finalLoopPath = roundTripData.path;
                 totalCost += roundTripData.cost;
                 statusHTML +=
                     `<br><b>Mandatory Round Trip:</b> ${formatPathWithIntermediates(
@@ -1063,6 +1119,7 @@ async function findPathGreedy(
                 loopPathData.path.length > 0 &&
                 loopPathData.cost !== Infinity
             ) {
+                finalLoopPath = loopPathData.path;
                 totalCost += loopPathData.cost;
                 statusHTML +=
                     `<br><b>Return Loop Path:</b> ${formatPathWithIntermediates(
@@ -1096,10 +1153,18 @@ async function findPathGreedy(
     } else if (effectiveTargetNodes.length > 0) {
         statusHTML += `<br><br>Could not reach any of the specified targets.`;
     }
-    statusDiv.innerHTML = statusHTML;
+    
+    pathSegments.forEach(segment => {
+        segment.forEach(node => persistentPathNodeIds.add(node));
+        getEdgeIdsForPath(segment).forEach(id => persistentPathEdgeIds.add(id)); 
+    });
+    finalLoopPath.forEach(node => persistentPathNodeIds.add(node));
+    getEdgeIdsForPath(finalLoopPath).forEach(id => persistentLoopEdgeIds.add(id));
 
-    updateAllNodeStyles();
+    statusDiv.innerHTML = statusHTML;
+    resetGraphStyles();
 }
+
 
 function formatPathWithIntermediates(
     pathArray,
@@ -1291,6 +1356,15 @@ async function findPathOptimal(
     if (!bestPermutationDetails) {
         statusHTML += `No complete path visiting all targets and looping back could be found.`;
     } else {
+        bestPermutationDetails.segments.forEach(seg => {
+            seg.forEach(node => persistentPathNodeIds.add(node));
+            getEdgeIdsForPath(seg).forEach(id => persistentPathEdgeIds.add(id));
+        });
+        if (bestPermutationDetails.loopSegment && bestPermutationDetails.loopSegment.path) {
+            bestPermutationDetails.loopSegment.path.forEach(node => persistentPathNodeIds.add(node));
+            getEdgeIdsForPath(bestPermutationDetails.loopSegment.path).forEach(id => persistentLoopEdgeIds.add(id));
+        }
+
         const pathCostWithoutLoop =
             bestPermutationDetails.totalCost -
             (bestPermutationDetails.loopSegment
@@ -1386,11 +1460,15 @@ async function findPathOptimal(
         }
     }
     statusDiv.innerHTML = statusHTML;
-    updateAllNodeStyles();
+    resetGraphStyles();
 }
 
 document.getElementById("findPathBtn").addEventListener("click", async () => {
+    persistentPathNodeIds.clear();
+    persistentPathEdgeIds.clear();
+    persistentLoopEdgeIds.clear();
     resetGraphStyles();
+
     const statusDiv = document.getElementById("status");
     statusDiv.innerHTML = "Processing...";
     let statusHTML = "";
@@ -1462,6 +1540,9 @@ document.getElementById("findPathBtn").addEventListener("click", async () => {
         );
 
         if (roundTripData.cost !== Infinity && roundTripData.path.length > 0) {
+            roundTripData.path.forEach(node => persistentPathNodeIds.add(node));
+            getEdgeIdsForPath(roundTripData.path).forEach(id => persistentLoopEdgeIds.add(id));
+
             statusHTML += `<br><b>Mandatory Round Trip:</b> ${formatPathWithIntermediates(
                 roundTripData.path,
                 startNode,
@@ -1488,7 +1569,7 @@ document.getElementById("findPathBtn").addEventListener("click", async () => {
             )}</span> via another node.`;
             statusDiv.innerHTML = statusHTML;
         }
-        updateAllNodeStyles();
+        resetGraphStyles();
         return;
     }
 
@@ -1586,12 +1667,6 @@ function populatePokemonList() {
     });
 }
 
-/**
- * A generic search handler for multi-select lists.
- * It filters items based on the search input and highlights the search term.
- * @param {HTMLInputElement} searchInput The input element for the search term.
- * @param {HTMLDivElement} container The container holding the list items.
- */
 function handleSearch(searchInput, container) {
     const searchTerm = searchInput.value.toLowerCase().trim();
     const items = container.getElementsByClassName("multi-select-item");
