@@ -1,4 +1,4 @@
-import { BiomeId, biomeNamesSorted, graph } from "./data.js";
+import { BiomeId, biomeNamesSorted, graph, allBiomes } from "./data.js";
 import {
     createMultiSelectItems,
     updateSelectedIndicator,
@@ -15,6 +15,7 @@ export const startBiomeSelect = document.getElementById("startBiome");
 export const selectedTargetBiomes = new Set();
 export const selectedAvoidBiomes = new Set();
 export const selectedPokemon = new Set();
+export const pokemonBiomes = new Set();
 export let persistentPathNodeIds = new Set();
 export let persistentPathEdgeIds = new Set();
 export let persistentLoopEdgeIds = new Set();
@@ -64,13 +65,7 @@ export const NODE_STYLES = {
 };
 
 export function updateAllNodeStyles() {
-    const pokemonSpawnBiomes = new Set();
-    if (selectedPokemon.size > 0) {
-        selectedPokemon.forEach((pokemonName) => {
-            const spawns = allPokemonData[pokemonName] || [];
-            spawns.forEach((spawnInfo) => pokemonSpawnBiomes.add(spawnInfo[0]));
-        });
-    }
+    const pokemonSpawnBiomes = pokemonBiomes;
 
     const updates = nodes.getIds().map((nodeId) => {
         const isStart = nodeId === startBiomeSelect.value;
@@ -131,6 +126,83 @@ export function updateAllNodeStyles() {
     }
 }
 
+export function handlePokemonSelectionChange() {
+    const selectedPokemonIndicator = document.getElementById(
+        "selectedPokemonIndicator"
+    );
+    pokemonBiomes.clear();
+    selectedPokemon.forEach((name) => {
+        const spawns = allPokemonData[name] || [];
+        spawns.forEach((spawnInfo) => pokemonBiomes.add(spawnInfo[0]));
+    });
+
+    updateSelectedIndicator(
+        selectedPokemon,
+        selectedPokemonIndicator,
+        "pokemonListContainer",
+        { onPokemonChange: handlePokemonSelectionChange }
+    );
+    updateTargetBiomesFromPokemon();
+}
+
+function updateTargetBiomesFromPokemon() {
+    const selectedTargetsIndicator = document.getElementById(
+        "selectedTargetsIndicator"
+    );
+    const includePokemonInTarget = document.getElementById(
+        "includePokemonInTarget"
+    );
+
+    // First, remove all Pokémon-related biomes that are not user-selected
+    const currentPokemonBiomes = new Set();
+    selectedPokemon.forEach((name) => {
+        const spawns = allPokemonData[name] || [];
+        spawns.forEach((spawnInfo) => currentPokemonBiomes.add(spawnInfo[0]));
+    });
+
+    allBiomes.forEach((biome) => {
+        if (!currentPokemonBiomes.has(biome)) {
+            const item = document.querySelector(
+                `#targetBiomesContainer .multi-select-item[data-value="${biome}"]`
+            );
+            if (item && !item.classList.contains("user-selected")) {
+                selectedTargetBiomes.delete(biome);
+                item.classList.remove("selected");
+            }
+        }
+    });
+
+    if (includePokemonInTarget.checked) {
+        pokemonBiomes.forEach((biome) => {
+            selectedTargetBiomes.add(biome);
+            const item = document.querySelector(
+                `#targetBiomesContainer .multi-select-item[data-value="${biome}"]`
+            );
+            if (item) {
+                item.classList.add("selected");
+            }
+        });
+    } else {
+        pokemonBiomes.forEach((biome) => {
+            const item = document.querySelector(
+                `#targetBiomesContainer .multi-select-item[data-value="${biome}"]`
+            );
+            if (item && !item.classList.contains("user-selected")) {
+                selectedTargetBiomes.delete(biome);
+                item.classList.remove("selected");
+            }
+        });
+    }
+
+    updateSelectedIndicator(
+        selectedTargetBiomes,
+        selectedTargetsIndicator,
+        "targetBiomesContainer",
+        { pokemonBiomes, includePokemonInTarget }
+    );
+    updateAllNodeStyles();
+}
+
 function initializeEventListeners() {
     const pokemonSearchInput = document.getElementById("pokemonSearch");
     const pokemonListContainer = document.getElementById(
@@ -149,6 +221,9 @@ function initializeEventListeners() {
     );
     const findPathBtn = document.getElementById("findPathBtn");
     const themeToggleBtn = document.getElementById("theme-toggle");
+    const includePokemonInTarget = document.getElementById(
+        "includePokemonInTarget"
+    );
 
     biomeNamesSorted.forEach((biome) => {
         const option = new Option(biome.replace(/_/g, " "), biome);
@@ -159,7 +234,9 @@ function initializeEventListeners() {
     createMultiSelectItems(
         "targetBiomesContainer",
         selectedTargetBiomes,
-        "selectedTargetsIndicator"
+        "selectedTargetsIndicator",
+        { pokemonBiomes, includePokemonInTarget },
+        true
     );
     createMultiSelectItems(
         "avoidBiomesContainer",
@@ -198,21 +275,11 @@ function initializeEventListeners() {
         const targetNodesInput = Array.from(selectedTargetBiomes);
         const avoidNodesSet = new Set(selectedAvoidBiomes);
 
-        const pokemonSpawnNodes = new Set();
-        if (selectedPokemon.size > 0) {
-            selectedPokemon.forEach((pokemonName) => {
-                const spawns = allPokemonData[pokemonName] || [];
-                spawns.forEach((spawnInfo) =>
-                    pokemonSpawnNodes.add(spawnInfo[0])
-                );
-            });
-        }
-
         await findPath(
             startNode,
             targetNodesInput,
             avoidNodesSet,
-            pokemonSpawnNodes,
+            pokemonBiomes,
             selectedTargetBiomes
         );
     });
@@ -227,10 +294,24 @@ function initializeEventListeners() {
         handleSearch(avoidBiomeSearchInput, avoidBiomesContainer)
     );
 
-    updateSelectedIndicator(
-        selectedPokemon,
-        selectedPokemonIndicator,
-        "pokemonListContainer"
+    pokemonListContainer.addEventListener("click", (event) => {
+        const item = event.target.closest(".multi-select-item");
+        if (item) {
+            const pokemonName = item.dataset.value;
+            if (selectedPokemon.has(pokemonName)) {
+                selectedPokemon.delete(pokemonName);
+                item.classList.remove("selected");
+            } else {
+                selectedPokemon.add(pokemonName);
+                item.classList.add("selected");
+            }
+            handlePokemonSelectionChange();
+        }
+    });
+
+    includePokemonInTarget.addEventListener(
+        "change",
+        updateTargetBiomesFromPokemon
     );
 
     themeToggleBtn.addEventListener("click", () => {

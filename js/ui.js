@@ -31,7 +31,13 @@ export const TIME_ICONS = {
     ALL: "🌍",
 };
 
-export function createMultiSelectItems(containerId, selectedSet, indicatorId) {
+export function createMultiSelectItems(
+    containerId,
+    selectedSet,
+    indicatorId,
+    options = {},
+    isTarget = false
+) {
     const container = document.getElementById(containerId);
     const indicator = document.getElementById(indicatorId);
     container.innerHTML = "";
@@ -51,8 +57,18 @@ export function createMultiSelectItems(containerId, selectedSet, indicatorId) {
         item.addEventListener("click", () => {
             const biomeValue = item.dataset.value;
             if (selectedSet.has(biomeValue)) {
+                if (
+                    isTarget &&
+                    options.pokemonBiomes?.has(biomeValue) &&
+                    options.includePokemonInTarget?.checked
+                ) {
+                    return;
+                }
                 selectedSet.delete(biomeValue);
                 item.classList.remove("selected");
+                if (isTarget) {
+                    item.classList.remove("user-selected");
+                }
             } else {
                 if (
                     containerId === "avoidBiomesContainer" &&
@@ -63,8 +79,16 @@ export function createMultiSelectItems(containerId, selectedSet, indicatorId) {
                 }
                 selectedSet.add(biomeValue);
                 item.classList.add("selected");
+                if (isTarget) {
+                    item.classList.add("user-selected");
+                }
             }
-            updateSelectedIndicator(selectedSet, indicator, containerId);
+            updateSelectedIndicator(
+                selectedSet,
+                indicator,
+                containerId,
+                options
+            );
             updateAllNodeStyles();
 
             if (
@@ -77,13 +101,16 @@ export function createMultiSelectItems(containerId, selectedSet, indicatorId) {
                         "#targetBiomesContainer .multi-select-item"
                     )
                     .forEach((tItem) => {
-                        if (tItem.dataset.value === biomeValue)
+                        if (tItem.dataset.value === biomeValue) {
                             tItem.classList.remove("selected");
+                            tItem.classList.remove("user-selected");
+                        }
                     });
                 updateSelectedIndicator(
                     selectedTargetBiomes,
                     document.getElementById("selectedTargetsIndicator"),
-                    "targetBiomesContainer"
+                    "targetBiomesContainer",
+                    options
                 );
             }
             if (
@@ -109,16 +136,18 @@ export function createMultiSelectItems(containerId, selectedSet, indicatorId) {
         });
         container.appendChild(item);
     });
-    updateSelectedIndicator(selectedSet, indicator, containerId);
+    updateSelectedIndicator(selectedSet, indicator, containerId, options);
 }
 
 export function updateSelectedIndicator(
     selectedSet,
     indicatorElement,
-    listContainerId
+    listContainerId,
+    options = {}
 ) {
     if (!indicatorElement) return;
 
+    const { pokemonBiomes, includePokemonInTarget, onPokemonChange } = options;
     indicatorElement.innerHTML = "";
 
     if (selectedSet.size === 0) {
@@ -136,12 +165,23 @@ export function updateSelectedIndicator(
             button.className = "selected-indicator-btn";
             button.dataset.value = itemName;
 
+            const isPokemonTarget =
+                pokemonBiomes &&
+                pokemonBiomes.has(itemName) &&
+                includePokemonInTarget &&
+                includePokemonInTarget.checked;
+            if (isPokemonTarget) {
+                button.classList.add("pokemon-target");
+            }
+
             button.innerHTML = `<span>${itemName.replace(
                 /_/g,
                 " "
             )}</span><span class="deselect-x">×</span>`;
 
             button.addEventListener("click", () => {
+                if (isPokemonTarget) return;
+
                 selectedSet.delete(itemName);
 
                 const mainListContainer =
@@ -152,12 +192,18 @@ export function updateSelectedIndicator(
                     );
                     if (itemInList) {
                         itemInList.classList.remove("selected");
+                        if (listContainerId === "targetBiomesContainer") {
+                            itemInList.classList.remove("user-selected");
+                        }
                     }
                 }
 
                 updateAllNodeStyles();
 
                 if (listContainerId === "pokemonListContainer") {
+                    if (onPokemonChange) {
+                        onPokemonChange();
+                    }
                     nodes.update(
                         nodes.get().map((node) => ({
                             id: node.id,
@@ -169,7 +215,8 @@ export function updateSelectedIndicator(
                 updateSelectedIndicator(
                     selectedSet,
                     indicatorElement,
-                    listContainerId
+                    listContainerId,
+                    options
                 );
             });
 
@@ -245,27 +292,6 @@ export function populatePokemonList() {
             item.classList.add("selected");
         }
 
-        item.addEventListener("click", () => {
-            if (selectedPokemon.has(pokemonName)) {
-                selectedPokemon.delete(pokemonName);
-                item.classList.remove("selected");
-            } else {
-                selectedPokemon.add(pokemonName);
-                item.classList.add("selected");
-            }
-            updateSelectedIndicator(
-                selectedPokemon,
-                selectedPokemonIndicator,
-                "pokemonListContainer"
-            );
-            updateAllNodeStyles();
-            nodes.update(
-                nodes.get().map((node) => ({
-                    id: node.id,
-                    title: createTooltipElement(node.id),
-                }))
-            );
-        });
         pokemonListContainer.appendChild(item);
     });
 }

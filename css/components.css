@@ -81,6 +81,30 @@
     color: #d9534f;
 }
 
+.selected-indicator-btn.pokemon-target {
+    background-color: #fff3cd;
+    color: #856404;
+    border-color: #ffeeba;
+}
+
+.selected-indicator-btn.pokemon-target:hover {
+    background-color: #ffeeba;
+}
+
+.selected-indicator-btn.pokemon-target .deselect-x {
+    display: none;
+}
+
+#pokemonSearchContainer .control-group {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+}
+
+#pokemonSearchContainer .control-group label {
+    margin-left: 5px;
+}
+
 .modal {
     display: none;
     position: fixed;
