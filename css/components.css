@@ -265,6 +265,11 @@ body.dark-theme .selected-indicator-btn {
 body.dark-theme .selected-indicator-btn:hover {
     background-color: #17a2b8;
 }
+body.dark-theme .selected-indicator-btn.pokemon-target {
+    background-color: #4a4121;
+    color: #f0e68c;
+    border-color: #5a5131;
+}
 
 body.dark-theme .highlight-key {
     color: #00aaff;
