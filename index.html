@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -11,7 +12,7 @@
     <div class="page-container">
         <div class="controls-panel">
             <h1>Biome Pathfinder</h1>
-            
+
             <div id="status" class="status">Select biomes and click "Find Path".</div>
             <div class="control-group">
                 <label for="startBiome">Start Biome:</label>
@@ -20,12 +21,14 @@
 
             <div class="control-group">
                 <label for="targetBiomesContainer">Target Biomes (Click to select/deselect):</label>
+                <input type="search" id="targetBiomeSearch" placeholder="Search target biomes...">
                 <div id="targetBiomesContainer" class="multi-select-container"></div>
                 <div id="selectedTargetsIndicator" class="selected-indicator-container">Nothing selected</div>
             </div>
 
             <div class="control-group">
                 <label for="avoidBiomesContainer">Avoid Biomes (Click to select/deselect):</label>
+                <input type="search" id="avoidBiomeSearch" placeholder="Search biomes to avoid...">
                 <div id="avoidBiomesContainer" class="multi-select-container"></div>
                 <div id="selectedAvoidIndicator" class="selected-indicator-container">Nothing selected</div>
             </div>
@@ -55,5 +58,6 @@
     </div>
 
     <script src="script.js"></script>
+
 </body>
-</html>
+</html> 
