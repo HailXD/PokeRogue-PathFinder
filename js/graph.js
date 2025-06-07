@@ -13,7 +13,7 @@ export function initializeGraph() {
     const isDark = document.body.classList.contains("dark-theme");
     const edgeColor = isDark ? "#555" : "#cccccc";
     const highlightColor = isDark ? "#777" : "#ababab";
-    const fontColor = isDark ? "#999" : "#777777";
+    const fontColor = isDark ? "#FFFFFF" : "#777777";
 
     edges.clear();
     graph.forEach((connections, source) => {
@@ -24,10 +24,10 @@ export function initializeGraph() {
                     .substr(2, 9)}`,
                 from: source,
                 to: conn.to,
-                label: conn.weight > 1 ? String(conn.weight) : undefined,
+                label: conn.weight > 1 ? `${Math.round(100 / conn.weight)}%` : undefined,
                 arrows: "to",
                 color: { color: edgeColor, highlight: highlightColor },
-                font: { align: "top", size: 9, color: fontColor },
+                font: { align: "top", size: 16, color: fontColor },
             });
         });
     });
@@ -109,7 +109,7 @@ export function resetGraphStyles() {
     const isDark = document.body.classList.contains("dark-theme");
     const edgeColor = isDark ? "#555" : "#cccccc";
     const highlightColor = isDark ? "#777" : "#ababab";
-    const fontColor = isDark ? "#999" : "#777777";
+    const fontColor = isDark ? "#FFFFFF" : "#777777";
 
     const pathEdgeStyle = {
         color: "#79B6FF",
