@@ -189,7 +189,7 @@ const NODE_STYLES = {
     },
     POKEMON_SPAWN_HIGHLIGHT: { border: "#FFD700", borderWidth: 4 },
     PATH_ANIMATION: { background: "#79B6FF", border: "black", borderWidth: 3 },
-    LOOP_ANIMATION: { background: "#ed3545", border: "black", borderWidth: 3 },
+    LOOP_ANIMATION: { background: "#97C2FC", border: "black", borderWidth: 3 },
 };
 
 const TIME_ICONS = {
@@ -374,12 +374,10 @@ function updateSelectedIndicator(
 
                 if (listContainerId === "pokemonListContainer") {
                     nodes.update(
-                        nodes
-                            .get()
-                            .map((node) => ({
-                                id: node.id,
-                                title: createTooltipElement(node.id),
-                            }))
+                        nodes.get().map((node) => ({
+                            id: node.id,
+                            title: createTooltipElement(node.id),
+                        }))
                     );
                 }
 
@@ -696,23 +694,61 @@ function resetGraphStyles() {
     });
 }
 
-async function animatePath(
-    pathSegments,
-    animationStyle,
-    isLoop = false,
-    baseDelay = 250
-) {
+async function animatePath(pathSegments, animationStyle, options = {}) {
+    const {
+        isLoop = false,
+        baseDelay = 250,
+        startNode = "",
+        targetNodes = new Set(),
+        pokemonSpawnNodes = new Set(),
+    } = options;
+
+    const processNode = async (nodeId) => {
+        const isStart = nodeId === startNode;
+        const isTarget = targetNodes.has(nodeId);
+        const isPokemonSpawn = pokemonSpawnNodes.has(nodeId);
+
+        let baseStyle = NODE_STYLES.DEFAULT;
+        if (isStart) baseStyle = NODE_STYLES.START;
+        else if (isTarget) baseStyle = NODE_STYLES.TARGET;
+
+        const nodeUpdate = {
+            id: nodeId,
+            font: {
+                color: baseStyle.fontColor,
+                size: baseStyle.fontSize,
+                bold: baseStyle.bold,
+            },
+        };
+
+        const backgroundColor = isTarget
+            ? NODE_STYLES.TARGET.background
+            : animationStyle.background;
+
+        let borderColor, borderWidth;
+        if (isPokemonSpawn) {
+            borderColor = NODE_STYLES.POKEMON_SPAWN_HIGHLIGHT.border;
+            borderWidth = NODE_STYLES.POKEMON_SPAWN_HIGHLIGHT.borderWidth;
+        } else {
+            borderColor = animationStyle.border;
+            borderWidth = animationStyle.borderWidth;
+        }
+
+        nodeUpdate.color = {
+            background: backgroundColor,
+            border: borderColor,
+        };
+        nodeUpdate.borderWidth = borderWidth;
+
+        nodes.update(nodeUpdate);
+    };
+
     for (let i = 0; i < pathSegments.length; i++) {
         const segment = pathSegments[i];
         if (!segment || segment.length === 0) continue;
 
         if (segment.length === 1) {
-            const { background, border, borderWidth } = animationStyle;
-            nodes.update({
-                id: segment[0],
-                color: { background, border },
-                borderWidth,
-            });
+            await processNode(segment[0]);
             await new Promise((resolve) => setTimeout(resolve, baseDelay / 2));
             continue;
         }
@@ -721,8 +757,7 @@ async function animatePath(
             const u = segment[j];
             const v = segment[j + 1];
 
-            const { background, border, borderWidth } = animationStyle;
-            nodes.update({ id: u, color: { background, border }, borderWidth });
+            await processNode(u);
             await new Promise((resolve) => setTimeout(resolve, baseDelay / 2));
 
             const edgeToUpdate = edges.get({
@@ -745,12 +780,7 @@ async function animatePath(
             await new Promise((resolve) => setTimeout(resolve, baseDelay / 2));
         }
         const lastNode = segment[segment.length - 1];
-        const { background, border, borderWidth } = animationStyle;
-        nodes.update({
-            id: lastNode,
-            color: { background, border },
-            borderWidth,
-        });
+        await processNode(lastNode);
     }
 }
 
@@ -840,7 +870,8 @@ async function findPathGreedy(
     effectiveTargetNodes,
     avoidNodesSet,
     statusDiv,
-    initialStatusHTML
+    initialStatusHTML,
+    styleOptions
 ) {
     let statusHTML = initialStatusHTML;
     statusHTML += `Starting from <span class="highlight-start">${startNode.replace(
@@ -950,12 +981,20 @@ async function findPathGreedy(
     ) {
         statusHTML += `<br><br>Failed to visit all targets. ${visitedTargetsOrder.length} of ${effectiveTargetNodes.length} targets visited.`;
         if (pathSegments.length > 0) {
-            await animatePath(pathSegments, NODE_STYLES.PATH_ANIMATION);
+            await animatePath(pathSegments, NODE_STYLES.PATH_ANIMATION, {
+                startNode: startNode,
+                targetNodes: styleOptions.allTargetNodes,
+                pokemonSpawnNodes: styleOptions.pokemonSpawnNodes,
+            });
         }
     } else if (visitedTargetsOrder.length > 0) {
         statusHTML += `<br><br>All targets visited! Greedy path cost (to last target): ${totalCost}.`;
         if (pathSegments.length > 0) {
-            await animatePath(pathSegments, NODE_STYLES.PATH_ANIMATION);
+            await animatePath(pathSegments, NODE_STYLES.PATH_ANIMATION, {
+                startNode: startNode,
+                targetNodes: styleOptions.allTargetNodes,
+                pokemonSpawnNodes: styleOptions.pokemonSpawnNodes,
+            });
         }
 
         const loopStartNode =
@@ -1000,8 +1039,13 @@ async function findPathGreedy(
                 await animatePath(
                     [roundTripData.path],
                     NODE_STYLES.LOOP_ANIMATION,
-                    true,
-                    300
+                    {
+                        isLoop: true,
+                        baseDelay: 300,
+                        startNode: startNode,
+                        targetNodes: styleOptions.allTargetNodes,
+                        pokemonSpawnNodes: styleOptions.pokemonSpawnNodes,
+                    }
                 );
             } else {
                 statusHTML += `<br>Cannot find a mandatory round trip from <span style="font-weight: bold;">${loopStartNode.replace(
@@ -1031,8 +1075,13 @@ async function findPathGreedy(
                 await animatePath(
                     [loopPathData.path],
                     NODE_STYLES.LOOP_ANIMATION,
-                    true,
-                    300
+                    {
+                        isLoop: true,
+                        baseDelay: 300,
+                        startNode: startNode,
+                        targetNodes: styleOptions.allTargetNodes,
+                        pokemonSpawnNodes: styleOptions.pokemonSpawnNodes,
+                    }
                 );
             } else {
                 statusHTML += `<br>Cannot find return loop path from <span style="font-weight: bold;">${loopStartNode.replace(
@@ -1083,7 +1132,8 @@ async function findPathOptimal(
     effectiveTargetNodes,
     avoidNodesSet,
     statusDiv,
-    initialStatusHTML
+    initialStatusHTML,
+    styleOptions
 ) {
     let statusHTML = initialStatusHTML;
     const MAX_TARGETS_FOR_OPTIMAL = 8;
@@ -1303,7 +1353,12 @@ async function findPathOptimal(
 
         await animatePath(
             bestPermutationDetails.segments,
-            NODE_STYLES.PATH_ANIMATION
+            NODE_STYLES.PATH_ANIMATION,
+            {
+                startNode: startNode,
+                targetNodes: styleOptions.allTargetNodes,
+                pokemonSpawnNodes: styleOptions.pokemonSpawnNodes,
+            }
         );
         if (
             bestPermutationDetails.loopSegment &&
@@ -1319,8 +1374,13 @@ async function findPathOptimal(
                 await animatePath(
                     [bestPermutationDetails.loopSegment.path],
                     NODE_STYLES.LOOP_ANIMATION,
-                    true,
-                    300
+                    {
+                        isLoop: true,
+                        baseDelay: 300,
+                        startNode: startNode,
+                        targetNodes: styleOptions.allTargetNodes,
+                        pokemonSpawnNodes: styleOptions.pokemonSpawnNodes,
+                    }
                 );
             }
         }
@@ -1338,6 +1398,19 @@ document.getElementById("findPathBtn").addEventListener("click", async () => {
     const startNode = startBiomeSelect.value;
     const targetNodesInput = Array.from(selectedTargetBiomes);
     const avoidNodesSet = new Set(selectedAvoidBiomes);
+
+    const pokemonSpawnNodes = new Set();
+    if (selectedPokemon.size > 0) {
+        selectedPokemon.forEach((pokemonName) => {
+            const spawns = allPokemonData[pokemonName] || [];
+            spawns.forEach((spawnInfo) => pokemonSpawnNodes.add(spawnInfo[0]));
+        });
+    }
+
+    const styleOptions = {
+        allTargetNodes: selectedTargetBiomes,
+        pokemonSpawnNodes: pokemonSpawnNodes,
+    };
 
     if (!startNode) {
         statusDiv.textContent = "Please select a start biome.";
@@ -1400,8 +1473,13 @@ document.getElementById("findPathBtn").addEventListener("click", async () => {
             await animatePath(
                 [roundTripData.path],
                 NODE_STYLES.LOOP_ANIMATION,
-                true,
-                300
+                {
+                    isLoop: true,
+                    baseDelay: 300,
+                    startNode: startNode,
+                    targetNodes: styleOptions.allTargetNodes,
+                    pokemonSpawnNodes: styleOptions.pokemonSpawnNodes,
+                }
             );
         } else {
             statusHTML += `<br>Cannot find a mandatory round trip from <span style="font-weight: bold;">${startNode.replace(
@@ -1451,7 +1529,8 @@ document.getElementById("findPathBtn").addEventListener("click", async () => {
             effectiveTargetNodes,
             avoidNodesSet,
             statusDiv,
-            statusHTML
+            statusHTML,
+            styleOptions
         );
     } else {
         await findPathOptimal(
@@ -1459,7 +1538,8 @@ document.getElementById("findPathBtn").addEventListener("click", async () => {
             effectiveTargetNodes,
             avoidNodesSet,
             statusDiv,
-            statusHTML
+            statusHTML,
+            styleOptions
         );
     }
 });
@@ -1496,12 +1576,10 @@ function populatePokemonList() {
             );
             updateAllNodeStyles();
             nodes.update(
-                nodes
-                    .get()
-                    .map((node) => ({
-                        id: node.id,
-                        title: createTooltipElement(node.id),
-                    }))
+                nodes.get().map((node) => ({
+                    id: node.id,
+                    title: createTooltipElement(node.id),
+                }))
             );
         });
         pokemonListContainer.appendChild(item);

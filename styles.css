@@ -36,6 +36,14 @@ body {
         z-index: 1000;
         box-shadow: none;
     }
+
+    #graph-container {
+        display: none;
+    }
+    
+    #pokemonSearchContainer {
+        display: none;
+    }
 }
 
 .graph-panel {
@@ -55,11 +63,6 @@ body {
     background-color: #f9f9f9;
     border-radius: 8px;
     transition: background-color 0.3s, border-color 0.3s;
-}
-@media (max-width: 768px) {
-    #graph-container {
-        display: none;
-    }
 }
 
 .control-group {
@@ -190,8 +193,7 @@ button#findPathBtn:hover {
     background-color: #e9ecef;
     border-radius: 4px;
     color: #495057;
-    text-align: left;
-    white-space: pre-wrap;
+    text-align: center;
     font-size: 0.9em;
     margin-top: 10px;
     margin-bottom: 10px;

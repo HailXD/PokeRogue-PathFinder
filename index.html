@@ -1,108 +1,74 @@
 <!DOCTYPE html>
 
 <html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Biome Pathfinder</title>
-        <script
-            type="text/javascript"
-            src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"
-        ></script>
-        <link rel="stylesheet" href="styles.css" />
-    </head>
-    <body>
-        <div class="page-container">
-            <div class="controls-panel">
-                <h1>Biome Pathfinder</h1>
 
-                <div id="status" class="status">
-                    Select biomes and click "Find Path".
-                </div>
-                <div class="control-group">
-                    <label for="startBiome">Start Biome:</label>
-                    <select id="startBiome"></select>
-                </div>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Biome Pathfinder</title>
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <link rel="stylesheet" href="styles.css" />
+</head>
 
-                <div class="control-group">
-                    <label for="targetBiomesContainer"
-                        >Target Biomes (Click to select/deselect):</label
-                    >
-                    <input
-                        type="search"
-                        id="targetBiomeSearch"
-                        placeholder="Search target biomes..."
-                    />
-                    <div
-                        id="targetBiomesContainer"
-                        class="multi-select-container"
-                    ></div>
-                    <div
-                        id="selectedTargetsIndicator"
-                        class="selected-indicator-container"
-                    >
-                        Nothing selected
-                    </div>
-                </div>
+<body>
+    <div class="page-container">
+        <div class="controls-panel">
+            <h1>Biome Pathfinder</h1>
 
-                <div class="control-group">
-                    <label for="avoidBiomesContainer"
-                        >Avoid Biomes (Click to select/deselect):</label
-                    >
-                    <input
-                        type="search"
-                        id="avoidBiomeSearch"
-                        placeholder="Search biomes to avoid..."
-                    />
-                    <div
-                        id="avoidBiomesContainer"
-                        class="multi-select-container"
-                    ></div>
-                    <div
-                        id="selectedAvoidIndicator"
-                        class="selected-indicator-container"
-                    >
-                        Nothing selected
-                    </div>
-                </div>
-
-                <div class="control-group">
-                    <label for="pokemonSearch">Find Pokémon:</label>
-                    <input
-                        type="search"
-                        id="pokemonSearch"
-                        placeholder="Search for a Pokémon..."
-                    />
-                    <div
-                        id="pokemonListContainer"
-                        class="multi-select-container"
-                    ></div>
-                    <div
-                        id="selectedPokemonIndicator"
-                        class="selected-indicator-container"
-                    >
-                        Nothing selected
-                    </div>
-                </div>
-
-                <button id="findPathBtn">Find Path</button>
+            <div id="status" class="status">
+                Select biomes and click "Find Path" or <br> Search for Pokemon to highlight their biomes.
+            </div>
+            <div class="control-group">
+                <label for="startBiome">Start Biome:</label>
+                <select id="startBiome"></select>
             </div>
 
-            <div class="graph-panel">
-                <div id="graph-container"></div>
+            <div class="control-group">
+                <label for="targetBiomesContainer">Target Biomes (Click to select/deselect):</label>
+                <input type="search" id="targetBiomeSearch" placeholder="Search target biomes..." />
+                <div id="targetBiomesContainer" class="multi-select-container"></div>
+                <div id="selectedTargetsIndicator" class="selected-indicator-container">
+                    Nothing selected
+                </div>
             </div>
+
+            <div class="control-group">
+                <label for="avoidBiomesContainer">Avoid Biomes (Click to select/deselect):</label>
+                <input type="search" id="avoidBiomeSearch" placeholder="Search biomes to avoid..." />
+                <div id="avoidBiomesContainer" class="multi-select-container"></div>
+                <div id="selectedAvoidIndicator" class="selected-indicator-container">
+                    Nothing selected
+                </div>
+            </div>
+
+            <div class="control-group" id="pokemonSearchContainer">
+                <label for="pokemonSearch">Find Pokémon:</label>
+                <input type="search" id="pokemonSearch" placeholder="Search for a Pokémon..." />
+                <div id="pokemonListContainer" class="multi-select-container"></div>
+                <div id="selectedPokemonIndicator" class="selected-indicator-container">
+                    Nothing selected
+                </div>
+            </div>
+
+            <button id="findPathBtn">Find Path</button>
         </div>
 
-        <div id="pokemon-modal" class="modal">
-            <div class="modal-content">
-                <span class="modal-close-btn">×</span>
-                <h3 id="modal-biome-name">Biome Spawns</h3>
-                <div id="modal-pokemon-list-container"></div>
-            </div>
+        <div class="graph-panel">
+            <div id="graph-container"></div>
         </div>
+    </div>
 
-        <button id="theme-toggle" title="Toggle dark/light theme">🌙</button>
+    <div id="pokemon-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close-btn">×</span>
+            <h3 id="modal-biome-name">Biome Spawns</h3>
+            <div id="modal-pokemon-list-container"></div>
+        </div>
+    </div>
 
-        <script src="script.js"></script>
-    </body>
+    <button id="theme-toggle" title="Toggle dark/light theme">🌙</button>
+
+    <script src="script.js"></script>
+</body>
+
 </html>
