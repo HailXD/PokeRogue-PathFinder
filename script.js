@@ -136,6 +136,7 @@ const selectedPokemon = new Set();
 let persistentPathNodeIds = new Set();
 let persistentPathEdgeIds = new Set();
 let persistentLoopEdgeIds = new Set();
+let visitedNodes = new Set();
 
 const pokemonSearchInput = document.getElementById("pokemonSearch");
 const pokemonListContainer = document.getElementById("pokemonListContainer");
@@ -190,7 +191,7 @@ const NODE_STYLES = {
         bold: false,
         borderWidth: 1.5,
     },
-    POKEMON_SPAWN_HIGHLIGHT: { border: "#FFD700", borderWidth: 4 },
+    POKEMON_SPAWN_HIGHLIGHT: { border: "#FFD700", borderWidth: 4},
     PATH_ANIMATION: { background: "#79B6FF", border: "black", borderWidth: 3 },
     LOOP_ANIMATION: { background: "#97C2FC", border: "black", borderWidth: 3 },
 };
@@ -217,16 +218,28 @@ function updateAllNodeStyles() {
         const isTarget = selectedTargetBiomes.has(nodeId);
         const isAvoid = selectedAvoidBiomes.has(nodeId);
         const isPokemonSpawn = pokemonSpawnBiomes.has(nodeId);
-        const isOnPath = persistentPathNodeIds.has(nodeId);
+        const isVisited = visitedNodes.has(nodeId);
 
-        let style = NODE_STYLES.DEFAULT;
-        if (isStart) style = NODE_STYLES.START;
-        else if (isAvoid) style = NODE_STYLES.AVOID;
-        else if (isTarget) style = NODE_STYLES.TARGET;
+        let style;
+        let isDefaultStyled = false;
+
+        if (isStart) {
+            style = NODE_STYLES.START;
+        } else if (isAvoid) {
+            style = NODE_STYLES.AVOID;
+        } else if (isTarget) {
+            style = NODE_STYLES.TARGET;
+        } else {
+            style = NODE_STYLES.DEFAULT;
+            isDefaultStyled = true;
+        }
 
         const nodeUpdate = {
             id: nodeId,
-            color: { background: style.background, border: style.border },
+            color: {
+                background: style.background,
+                border: style.border,
+            },
             font: {
                 color: style.fontColor,
                 size: style.fontSize,
@@ -235,11 +248,20 @@ function updateAllNodeStyles() {
             borderWidth: style.borderWidth,
         };
 
+        if (isVisited) {
+            nodeUpdate.font.bold = true;
+            if (isDefaultStyled) {
+                const pathStyle = NODE_STYLES.PATH_ANIMATION;
+                nodeUpdate.color.background = pathStyle.background;
+                nodeUpdate.color.border = pathStyle.border;
+                nodeUpdate.borderWidth = pathStyle.borderWidth;
+            }
+        }
+
         if (isPokemonSpawn) {
-            nodeUpdate.color.border =
-                NODE_STYLES.POKEMON_SPAWN_HIGHLIGHT.border;
-            nodeUpdate.borderWidth =
-                NODE_STYLES.POKEMON_SPAWN_HIGHLIGHT.borderWidth;
+            const spawnHighlight = NODE_STYLES.POKEMON_SPAWN_HIGHLIGHT;
+            nodeUpdate.color.border = spawnHighlight.border;
+            nodeUpdate.borderWidth = spawnHighlight.borderWidth;
         }
 
         return nodeUpdate;
@@ -1159,12 +1181,18 @@ async function findPathGreedy(
     }
 
     pathSegments.forEach((segment) => {
-        segment.forEach((node) => persistentPathNodeIds.add(node));
+        segment.forEach((node) => {
+            persistentPathNodeIds.add(node);
+            visitedNodes.add(node);
+        });
         getEdgeIdsForPath(segment).forEach((id) =>
             persistentPathEdgeIds.add(id)
         );
     });
-    finalLoopPath.forEach((node) => persistentPathNodeIds.add(node));
+    finalLoopPath.forEach((node) => {
+        persistentPathNodeIds.add(node);
+        visitedNodes.add(node);
+    });
     getEdgeIdsForPath(finalLoopPath).forEach((id) =>
         persistentLoopEdgeIds.add(id)
     );
@@ -1363,7 +1391,10 @@ async function findPathOptimal(
         statusHTML += `No complete path visiting all targets and looping back could be found.`;
     } else {
         bestPermutationDetails.segments.forEach((seg) => {
-            seg.forEach((node) => persistentPathNodeIds.add(node));
+            seg.forEach((node) => {
+                persistentPathNodeIds.add(node);
+                visitedNodes.add(node);
+            });
             getEdgeIdsForPath(seg).forEach((id) =>
                 persistentPathEdgeIds.add(id)
             );
@@ -1372,9 +1403,10 @@ async function findPathOptimal(
             bestPermutationDetails.loopSegment &&
             bestPermutationDetails.loopSegment.path
         ) {
-            bestPermutationDetails.loopSegment.path.forEach((node) =>
-                persistentPathNodeIds.add(node)
-            );
+            bestPermutationDetails.loopSegment.path.forEach((node) => {
+                persistentPathNodeIds.add(node);
+                visitedNodes.add(node);
+            });
             getEdgeIdsForPath(bestPermutationDetails.loopSegment.path).forEach(
                 (id) => persistentLoopEdgeIds.add(id)
             );
@@ -1482,6 +1514,7 @@ document.getElementById("findPathBtn").addEventListener("click", async () => {
     persistentPathNodeIds.clear();
     persistentPathEdgeIds.clear();
     persistentLoopEdgeIds.clear();
+    visitedNodes.clear();
     resetGraphStyles();
 
     const statusDiv = document.getElementById("status");
@@ -1555,9 +1588,10 @@ document.getElementById("findPathBtn").addEventListener("click", async () => {
         );
 
         if (roundTripData.cost !== Infinity && roundTripData.path.length > 0) {
-            roundTripData.path.forEach((node) =>
-                persistentPathNodeIds.add(node)
-            );
+            roundTripData.path.forEach((node) => {
+                persistentPathNodeIds.add(node);
+                visitedNodes.add(node);
+            });
             getEdgeIdsForPath(roundTripData.path).forEach((id) =>
                 persistentLoopEdgeIds.add(id)
             );
