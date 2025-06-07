@@ -10,6 +10,17 @@ import {
 } from "./main.js";
 import { resetGraphStyles } from "./graph.js";
 
+const INSTRUCTIONAL_TEXT = `
+    <br><br><hr style="border-top: 1px solid #ccc; margin: 10px 0;"><br>
+    Select <span class="highlight-key">biomes</span> and click
+    <span class="highlight-key">"Find Path"</span><br />
+    <span class="highlight-key">Click</span> on a biome to see
+    list full list of spawn.<br />
+    <span class="highlight-key">Search</span> for Pokemon to
+    highlight their biomes.<br />
+    <span class="highlight-key">Hover</span> on highlighted to
+    view selected Pokemon.<br />`;
+
 class PriorityQueue {
     constructor() {
         this.heap = [];
@@ -671,7 +682,7 @@ async function findPathOptimal(
             }
         }
     }
-    statusDiv.innerHTML = statusHTML;
+    statusDiv.innerHTML = statusHTML + INSTRUCTIONAL_TEXT;
     resetGraphStyles();
 }
 
@@ -775,6 +786,7 @@ export async function findPath(
             )}</span> via another node.`;
             statusDiv.innerHTML = statusHTML;
         }
+        statusDiv.innerHTML += INSTRUCTIONAL_TEXT;
         resetGraphStyles();
         return;
     }
@@ -788,29 +800,10 @@ export async function findPath(
         (tn) => !avoidNodesSet.has(tn) && tn !== startNode
     );
 
-    if (effectiveTargetNodes.length !== targetNodesInput.length) {
-        const removedCount =
-            targetNodesInput.length - effectiveTargetNodes.length;
-        const autoRemovedReason = targetNodesInput.some(
-            (tn) => tn === startNode
-        )
-            ? " (start node cannot be a distinct target)"
-            : targetNodesInput.some((tn) => avoidNodesSet.has(tn))
-            ? " (in avoid list)"
-            : "";
-        statusHTML += `Warning: ${removedCount} target(s) were invalid${autoRemovedReason} and have been excluded.<br>`;
-    }
-
     if (effectiveTargetNodes.length === 0) {
         statusHTML += `Error: No valid targets to route to after filtering. `;
         statusDiv.innerHTML = statusHTML;
         return;
-    }
-
-    const MAX_TARGETS_FOR_OPTIMAL_WARNING = 8;
-
-    if (effectiveTargetNodes.length > MAX_TARGETS_FOR_OPTIMAL_WARNING) {
-        statusHTML += `Warning: Calculating optimal path for ${effectiveTargetNodes.length} targets may be slow.<br>`;
     }
 
     await findPathOptimal(

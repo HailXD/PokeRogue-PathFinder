@@ -95,6 +95,11 @@
     display: none;
 }
 
+.highlight-key {
+    color: #007bff;
+    font-weight: bold;
+}
+
 #pokemonSearchContainer .control-group {
     display: flex;
     align-items: center;
@@ -259,6 +264,10 @@ body.dark-theme .selected-indicator-btn {
 
 body.dark-theme .selected-indicator-btn:hover {
     background-color: #17a2b8;
+}
+
+body.dark-theme .highlight-key {
+    color: #00aaff;
 }
 
 body.dark-theme .modal-content {
