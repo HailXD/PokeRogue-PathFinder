@@ -197,7 +197,7 @@ biomeNamesSorted.forEach(biome => {
             selectedSet.add(biomeValue);
             item.classList.add('selected');
         }
-        updateSelectedIndicator(selectedSet, indicator);
+        updateSelectedIndicator(selectedSet, indicator, containerId);
         updateAllNodeStyles();
 
         if (containerId === 'avoidBiomesContainer' && selectedTargetBiomes.has(biomeValue)) {
@@ -205,34 +205,64 @@ biomeNamesSorted.forEach(biome => {
             document.querySelectorAll('#targetBiomesContainer .multi-select-item').forEach(tItem => {
                 if (tItem.dataset.value === biomeValue) tItem.classList.remove('selected');
             });
-            updateSelectedIndicator(selectedTargetBiomes, document.getElementById('selectedTargetsIndicator'));
+            updateSelectedIndicator(selectedTargetBiomes, document.getElementById('selectedTargetsIndicator'), 'targetBiomesContainer');
         }
         if (containerId === 'targetBiomesContainer' && selectedAvoidBiomes.has(biomeValue)) {
             selectedAvoidBiomes.delete(biomeValue);
             document.querySelectorAll('#avoidBiomesContainer .multi-select-item').forEach(aItem => {
                 if (aItem.dataset.value === biomeValue) aItem.classList.remove('selected');
             });
-            updateSelectedIndicator(selectedAvoidBiomes, document.getElementById('selectedAvoidIndicator'));
+            updateSelectedIndicator(selectedAvoidBiomes, document.getElementById('selectedAvoidIndicator'), 'avoidBiomesContainer');
         }
         updateAllNodeStyles();
     });
     container.appendChild(item);
 });
-updateSelectedIndicator(selectedSet, indicator);
+updateSelectedIndicator(selectedSet, indicator, containerId);
 }
 
-function updateSelectedIndicator(selectedSet, indicatorElement) {
-if (selectedSet.size === 0) {
-indicatorElement.textContent = "Nothing selected";
-} else {
-indicatorElement.innerHTML = '';
-Array.from(selectedSet).sort().forEach(itemName => {
-const span = document.createElement('span');
-span.textContent = itemName.replace(/_/g, ' ');
-indicatorElement.appendChild(span);
-});
+function updateSelectedIndicator(selectedSet, indicatorElement, listContainerId) {
+    if (!indicatorElement) return;
+
+    indicatorElement.innerHTML = '';
+
+    if (selectedSet.size === 0) {
+        indicatorElement.textContent = "Nothing selected";
+        indicatorElement.style.justifyContent = 'flex-start';
+        return;
+    }
+
+    Array.from(selectedSet).sort().forEach(itemName => {
+        const button = document.createElement('button');
+        button.className = 'selected-indicator-btn';
+        button.dataset.value = itemName;
+        
+        button.innerHTML = `<span>${itemName.replace(/_/g, ' ')}</span><span class="deselect-x">×</span>`;
+
+        button.addEventListener('click', () => {
+            selectedSet.delete(itemName);
+
+            const mainListContainer = document.getElementById(listContainerId);
+            if (mainListContainer) {
+                const itemInList = mainListContainer.querySelector(`.multi-select-item[data-value="${itemName}"]`);
+                if (itemInList) {
+                    itemInList.classList.remove('selected');
+                }
+            }
+
+            updateAllNodeStyles();
+
+            if (listContainerId === 'pokemonListContainer') {
+                nodes.update(nodes.get().map(node => ({ id: node.id, title: createTooltipElement(node.id) })));
+            }
+
+            updateSelectedIndicator(selectedSet, indicatorElement, listContainerId);
+        });
+
+        indicatorElement.appendChild(button);
+    });
 }
-}
+
 
 createMultiSelectItems('targetBiomesContainer', selectedTargetBiomes, 'selectedTargetsIndicator');
 createMultiSelectItems('avoidBiomesContainer', selectedAvoidBiomes, 'selectedAvoidIndicator');
@@ -242,10 +272,10 @@ const newStartNode = event.target.value;
 
 if (selectedAvoidBiomes.has(newStartNode)) {
     selectedAvoidBiomes.delete(newStartNode);
-    document.querySelectorAll('#avoidBiomesContainer .multi-select-item').forEach(aItem => {
-        if (aItem.dataset.value === newStartNode) aItem.classList.remove('selected');
-    });
-    updateSelectedIndicator(selectedAvoidBiomes, document.getElementById('selectedAvoidIndicator'));
+    const itemInList = document.querySelector(`#avoidBiomesContainer .multi-select-item[data-value="${newStartNode}"]`);
+    if (itemInList) itemInList.classList.remove('selected');
+    
+    updateSelectedIndicator(selectedAvoidBiomes, document.getElementById('selectedAvoidIndicator'), 'avoidBiomesContainer');
 }
 
 previousStartNode = newStartNode;
@@ -973,6 +1003,7 @@ pokemonNames.forEach(pokemonName => {
     item.classList.add('multi-select-item');
     item.textContent = itemText;
     item.dataset.pokemonName = pokemonName;
+    item.dataset.value = pokemonName;
     item.dataset.originalText = itemText;
 
     if (selectedPokemon.has(pokemonName)) {
@@ -987,7 +1018,7 @@ pokemonNames.forEach(pokemonName => {
             selectedPokemon.add(pokemonName);
             item.classList.add('selected');
         }
-        updateSelectedIndicator(selectedPokemon, selectedPokemonIndicator);
+        updateSelectedIndicator(selectedPokemon, selectedPokemonIndicator, 'pokemonListContainer');
         updateAllNodeStyles();
         nodes.update(nodes.get().map(node => ({id: node.id, title: createTooltipElement(node.id)})));
     });
@@ -1094,7 +1125,7 @@ for (const pokemonName in allPokemonData) {
     targetBiomeSearchInput.addEventListener('input', () => handleSearch(targetBiomeSearchInput, targetBiomesContainer));
     avoidBiomeSearchInput.addEventListener('input', () => handleSearch(avoidBiomeSearchInput, avoidBiomesContainer));
     
-    updateSelectedIndicator(selectedPokemon, selectedPokemonIndicator);
+    updateSelectedIndicator(selectedPokemon, selectedPokemonIndicator, 'pokemonListContainer');
     
     initializeModal();
     initializeGraph();
