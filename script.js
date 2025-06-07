@@ -235,10 +235,6 @@ function updateAllNodeStyles() {
             borderWidth: style.borderWidth,
         };
 
-        if (isOnPath) {
-            nodeUpdate.font.bold = true;
-        }
-
         if (isPokemonSpawn) {
             nodeUpdate.color.border =
                 NODE_STYLES.POKEMON_SPAWN_HIGHLIGHT.border;
