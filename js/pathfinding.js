@@ -271,261 +271,6 @@ function findShortestRoundTripFromNode(node, avoidNodesSet) {
     return { path: bestLoopPath, cost: minLoopCost };
 }
 
-async function findPathGreedy(
-    startNode,
-    effectiveTargetNodes,
-    avoidNodesSet,
-    statusDiv,
-    initialStatusHTML,
-    styleOptions
-) {
-    let statusHTML = initialStatusHTML;
-    statusHTML += `Starting from <span class="highlight-start">${startNode.replace(
-        /_/g,
-        " "
-    )}</span>.<br>Seeking targets: ${effectiveTargetNodes
-        .map(
-            (t) =>
-                `<span class="highlight-target">${t.replace(/_/g, " ")}</span>`
-        )
-        .join(", ")}.`;
-    if (avoidNodesSet.size > 0) {
-        statusHTML += `<br>Avoiding: ${Array.from(avoidNodesSet)
-            .map(
-                (a) =>
-                    `<span class="highlight-avoid">${a.replace(
-                        /_/g,
-                        " "
-                    )}</span>`
-            )
-            .join(", ")}.`;
-    }
-    statusDiv.innerHTML = statusHTML;
-    await new Promise((resolve) => setTimeout(resolve, 10));
-
-    let currentPos = startNode;
-    let remainingTargets = new Set(effectiveTargetNodes);
-    const visitedTargetsOrder = [];
-    const pathSegments = [];
-    let totalCost = 0;
-    let pathPossible = true;
-    let firstVisitedTarget = null;
-    let finalLoopPath = [];
-
-    while (remainingTargets.size > 0) {
-        let bestPathToNextTarget = { path: [], cost: Infinity };
-        let nextTargetChosen = null;
-
-        for (const target of remainingTargets) {
-            if (target === currentPos) {
-                bestPathToNextTarget = { path: [currentPos], cost: 0 };
-                nextTargetChosen = target;
-                break;
-            }
-            const res = dijkstra(currentPos, target, avoidNodesSet);
-            if (res.path.length > 0 && res.cost < bestPathToNextTarget.cost) {
-                bestPathToNextTarget = res;
-                nextTargetChosen = target;
-            }
-        }
-
-        if (!nextTargetChosen) {
-            pathPossible = false;
-            statusHTML += `<br><br>Cannot reach any remaining targets from ${currentPos.replace(
-                /_/g,
-                " "
-            )}. Pathfinding stopped.`;
-            break;
-        }
-
-        if (
-            bestPathToNextTarget.path.length > 0 &&
-            !(
-                bestPathToNextTarget.path.length === 1 &&
-                bestPathToNextTarget.path[0] === currentPos &&
-                bestPathToNextTarget.cost > 0
-            )
-        ) {
-            if (
-                bestPathToNextTarget.path.length > 1 ||
-                bestPathToNextTarget.cost === 0
-            ) {
-                pathSegments.push(bestPathToNextTarget.path);
-            }
-        }
-
-        totalCost += bestPathToNextTarget.cost;
-        currentPos = nextTargetChosen;
-
-        if (!visitedTargetsOrder.includes(nextTargetChosen)) {
-            visitedTargetsOrder.push(nextTargetChosen);
-            if (!firstVisitedTarget) {
-                firstVisitedTarget = nextTargetChosen;
-            }
-        }
-        remainingTargets.delete(nextTargetChosen);
-
-        statusHTML +=
-            `<br>\nReached <span class="highlight-target">${nextTargetChosen.replace(
-                /_/g,
-                " "
-            )}</span>` +
-            (bestPathToNextTarget.path.length > 1
-                ? ` via\n[${formatPathWithIntermediates(
-                      bestPathToNextTarget.path,
-                      startNode,
-                      effectiveTargetNodes
-                  )}]`
-                : "") +
-            ` (cost: ${bestPathToNextTarget.cost}).`;
-        statusDiv.innerHTML = statusHTML;
-        await new Promise((resolve) => setTimeout(resolve, 10));
-    }
-
-    if (
-        !pathPossible &&
-        visitedTargetsOrder.length < effectiveTargetNodes.length
-    ) {
-        statusHTML += `<br><br>Failed to visit all targets. ${visitedTargetsOrder.length} of ${effectiveTargetNodes.length} targets visited.`;
-        if (pathSegments.length > 0) {
-            await animatePath(pathSegments, NODE_STYLES.PATH_ANIMATION, {
-                startNode: startNode,
-                targetNodes: styleOptions.allTargetNodes,
-                pokemonSpawnNodes: styleOptions.pokemonSpawnNodes,
-            });
-        }
-    } else if (visitedTargetsOrder.length > 0) {
-        statusHTML += `<br><br>All targets visited! Greedy path cost (to last target): ${totalCost}.`;
-        if (pathSegments.length > 0) {
-            await animatePath(pathSegments, NODE_STYLES.PATH_ANIMATION, {
-                startNode: startNode,
-                targetNodes: styleOptions.allTargetNodes,
-                pokemonSpawnNodes: styleOptions.pokemonSpawnNodes,
-            });
-        }
-
-        const loopStartNode =
-            visitedTargetsOrder[visitedTargetsOrder.length - 1];
-        const loopEndNode = firstVisitedTarget;
-
-        statusHTML += `<br><br>Calculating return loop path from <span class="highlight-loop">${loopStartNode.replace(
-            /_/g,
-            " "
-        )}</span> back to <span class="highlight-loop">${loopEndNode.replace(
-            /_/g,
-            " "
-        )}</span>...`;
-        statusDiv.innerHTML = statusHTML;
-        await new Promise((resolve) => setTimeout(resolve, 10));
-
-        if (loopStartNode === loopEndNode) {
-            statusHTML += `<br>Looping from/to the same target <span class="highlight-target">${loopStartNode.replace(
-                /_/g,
-                " "
-            )}</span>. Applying mandatory round trip rule.`;
-            statusDiv.innerHTML = statusHTML;
-            await new Promise((resolve) => setTimeout(resolve, 10));
-
-            const roundTripData = findShortestRoundTripFromNode(
-                loopStartNode,
-                avoidNodesSet
-            );
-            if (
-                roundTripData.cost !== Infinity &&
-                roundTripData.path.length > 0
-            ) {
-                finalLoopPath = roundTripData.path;
-                totalCost += roundTripData.cost;
-                statusHTML +=
-                    `<br><b>Mandatory Round Trip:</b> ${formatPathWithIntermediates(
-                        roundTripData.path,
-                        startNode,
-                        [loopStartNode],
-                        true
-                    )}` +
-                    `<br><b>Cost:</b> ${roundTripData.cost}. <br><b>Total combined greedy cost: ${totalCost}</b>.`;
-                await animatePath(
-                    [roundTripData.path],
-                    NODE_STYLES.LOOP_ANIMATION,
-                    {
-                        isLoop: true,
-                        baseDelay: 200,
-                        startNode: startNode,
-                        targetNodes: styleOptions.allTargetNodes,
-                        pokemonSpawnNodes: styleOptions.pokemonSpawnNodes,
-                    }
-                );
-            } else {
-                statusHTML += `<br>Cannot find a mandatory round trip from <span style="font-weight: bold;">${loopStartNode.replace(
-                    /_/g,
-                    " "
-                )}</span> via another node. Loop part failed. Total cost remains ${totalCost}.`;
-            }
-        } else {
-            const loopPathData = dijkstra(
-                loopStartNode,
-                loopEndNode,
-                avoidNodesSet
-            );
-            if (
-                loopPathData.path.length > 0 &&
-                loopPathData.cost !== Infinity
-            ) {
-                finalLoopPath = loopPathData.path;
-                totalCost += loopPathData.cost;
-                statusHTML +=
-                    `<br><b>Return Loop Path:</b> ${formatPathWithIntermediates(
-                        loopPathData.path,
-                        startNode,
-                        [loopStartNode, loopEndNode],
-                        true
-                    )}` +
-                    `<br><b>Cost:</b> ${loopPathData.cost}. <br><b>Total combined greedy cost: ${totalCost}</b>.`;
-                await animatePath(
-                    [loopPathData.path],
-                    NODE_STYLES.LOOP_ANIMATION,
-                    {
-                        isLoop: true,
-                        baseDelay: 300,
-                        startNode: startNode,
-                        targetNodes: styleOptions.allTargetNodes,
-                        pokemonSpawnNodes: styleOptions.pokemonSpawnNodes,
-                    }
-                );
-            } else {
-                statusHTML += `<br>Cannot find return loop path from <span style="font-weight: bold;">${loopStartNode.replace(
-                    /_/g,
-                    " "
-                )}</span> to <span style="font-weight: bold;">${loopEndNode.replace(
-                    /_/g,
-                    " "
-                )}</span>. Total cost remains ${totalCost}.`;
-            }
-        }
-    } else if (effectiveTargetNodes.length > 0) {
-        statusHTML += `<br><br>Could not reach any of the specified targets.`;
-    }
-
-    pathSegments.forEach((segment) => {
-        segment.forEach((node) => {
-            persistentPathNodeIds.add(node);
-            visitedNodes.add(node);
-        });
-        getEdgeIdsForPath(segment).forEach((id) =>
-            persistentPathEdgeIds.add(id)
-        );
-    });
-    finalLoopPath.forEach((node) => {
-        persistentPathNodeIds.add(node);
-        visitedNodes.add(node);
-    });
-    getEdgeIdsForPath(finalLoopPath).forEach((id) =>
-        persistentLoopEdgeIds.add(id)
-    );
-
-    statusDiv.innerHTML = statusHTML;
-    resetGraphStyles();
-}
 
 function formatPathWithIntermediates(
     pathArray,
@@ -963,31 +708,23 @@ export async function findPath(
     }
 
     if (effectiveTargetNodes.length === 0) {
-        statusHTML += `Error: No valid targets to route to after filtering. Ensure targets are not the start node or in the avoid list.`;
+        statusHTML += `Error: No valid targets to route to after filtering. `;
         statusDiv.innerHTML = statusHTML;
         return;
     }
 
-    const MAX_TARGETS_FOR_OPTIMAL = 8;
+    const MAX_TARGETS_FOR_OPTIMAL_WARNING = 8;
 
-    if (effectiveTargetNodes.length > MAX_TARGETS_FOR_OPTIMAL) {
-        statusHTML += `Number of targets (${effectiveTargetNodes.length}) exceeds ${MAX_TARGETS_FOR_OPTIMAL}. Using a greedy heuristic (may not be the absolute shortest path).<br>`;
-        await findPathGreedy(
-            startNode,
-            effectiveTargetNodes,
-            avoidNodesSet,
-            statusDiv,
-            statusHTML,
-            styleOptions
-        );
-    } else {
-        await findPathOptimal(
-            startNode,
-            effectiveTargetNodes,
-            avoidNodesSet,
-            statusDiv,
-            statusHTML,
-            styleOptions
-        );
+    if (effectiveTargetNodes.length > MAX_TARGETS_FOR_OPTIMAL_WARNING) {
+        statusHTML += `Warning: Calculating optimal path for ${effectiveTargetNodes.length} targets may be slow.<br>`;
     }
+
+    await findPathOptimal(
+        startNode,
+        effectiveTargetNodes,
+        avoidNodesSet,
+        statusDiv,
+        statusHTML,
+        styleOptions
+    );
 }
