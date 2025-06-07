@@ -10,7 +10,6 @@ import {
 } from "./main.js";
 import { resetGraphStyles } from "./graph.js";
 
-// Min-heap implementation for a Priority Queue
 class PriorityQueue {
     constructor() {
         this.heap = [];
@@ -808,6 +807,12 @@ export async function findPath(
         return;
     }
 
+    const MAX_TARGETS_FOR_OPTIMAL_WARNING = 8;
+
+    if (effectiveTargetNodes.length > MAX_TARGETS_FOR_OPTIMAL_WARNING) {
+        statusHTML += `Warning: Calculating optimal path for ${effectiveTargetNodes.length} targets may be slow.<br>`;
+    }
+
     await findPathOptimal(
         startNode,
         effectiveTargetNodes,
@@ -817,3 +822,4 @@ export async function findPath(
         styleOptions
     );
 }
+

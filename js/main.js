@@ -153,7 +153,6 @@ function updateTargetBiomesFromPokemon() {
         "includePokemonInTarget"
     );
 
-    // First, remove all Pokémon-related biomes that are not user-selected
     const currentPokemonBiomes = new Set();
     selectedPokemon.forEach((name) => {
         const spawns = allPokemonData[name] || [];
