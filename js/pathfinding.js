@@ -876,14 +876,14 @@ export async function findPath(
     if (isOnlyStartNodeTarget) {
         let actionDescription =
             targetNodesInput.length === 0
-                ? `No targets selected. Assuming mandatory round trip from Start Node: <span class="highlight-start">${startNode.replace(
+                ? `No targets selected. Assuming cycle from Start Node: <span class="highlight-start">${startNode.replace(
                       /_/g,
                       " "
                   )}</span>.`
                 : `Start Node <span class="highlight-start">${startNode.replace(
                       /_/g,
                       " "
-                  )}</span> is the only target. Finding a mandatory round trip.`;
+                  )}</span> is the only target. Finding a cycle.`;
         statusHTML = actionDescription + "<br>";
 
         if (avoidNodesSet.size > 0) {
@@ -915,7 +915,7 @@ export async function findPath(
                 persistentLoopEdgeIds.add(id)
             );
 
-            statusHTML += `<br><b>Mandatory Round Trip:</b> ${formatPathWithIntermediates(
+            statusHTML += `<br><b>Cycle:</b> ${formatPathWithIntermediates(
                 roundTripData.path,
                 startNode,
                 [startNode],
@@ -935,7 +935,7 @@ export async function findPath(
                 }
             );
         } else {
-            statusHTML += `<br>Cannot find a mandatory round trip from <span style="font-weight: bold;">${startNode.replace(
+            statusHTML += `<br>Cannot find a cycle from <span style="font-weight: bold;">${startNode.replace(
                 /_/g,
                 " "
             )}</span> via another node.`;
