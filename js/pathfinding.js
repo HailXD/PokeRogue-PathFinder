@@ -753,31 +753,11 @@ async function findPathOptimal(
             return html;
         };
 
-        // Always show Optimal Path
         statusHTML += generatePathDisplay(optimalPathDetails, "Optimal Path");
-
-        // Show Shortest Path only if it's different from Optimal
-        const optimalSignature = JSON.stringify({
-            perm: optimalPathDetails.permutation,
-            cost: optimalPathDetails.totalCost,
-        });
-        const shortestSignature =
-            shortestPathDetails &&
-            JSON.stringify({
-                perm: shortestPathDetails.permutation,
-                cost: shortestPathDetails.totalCost,
-            });
-
-        if (
-            shortestPathDetails &&
-            optimalSignature !== shortestSignature &&
-            shortestPathDetails.totalCost < optimalPathDetails.totalCost
-        ) {
-            statusHTML += generatePathDisplay(
-                shortestPathDetails,
-                "Shortest Path"
-            );
-        }
+        statusHTML += generatePathDisplay(
+            shortestPathDetails,
+            "Shortest Path"
+        );
 
         await animatePath(
             pathDetailsToAnimate.segments,
