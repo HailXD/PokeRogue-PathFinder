@@ -25,7 +25,7 @@ function generateQueryKey(startNode, targetNodes, avoidNodesSet) {
 }
 
 const INSTRUCTIONAL_TEXT = `
-    <br><br><hr style="border-top: 1px solid #ccc; margin: 10px 0;"><br>
+    <hr style="border-top: 1px solid #ccc; margin: 10px 0;"><br>
     Select <span class="highlight-key">biomes</span> to find the optimal path.<br />
     <span class="highlight-key">Click</span> on a biome to see
     list full list of spawn.<br />
@@ -35,7 +35,7 @@ const INSTRUCTIONAL_TEXT = `
     highlight their biomes.<br />
     <span class="highlight-key">Hover</span> on highlighted to
     view selected Pokemon.<br />`;
-
+ 
 class PriorityQueue {
     constructor() {
         this.heap = [];
@@ -708,7 +708,8 @@ async function findPathOptimal(
 
     if (!bestPermutationDetails) {
         statusHTML += `No complete path visiting all targets could be found.`;
-        statusDiv.innerHTML = statusHTML + INSTRUCTIONAL_TEXT;
+        statusDiv.innerHTML =
+            statusHTML + INSTRUCTIONAL_TEXT;
         resetGraphStyles();
         cachedPathResults = null; // No result, clear cache
         return;
@@ -792,8 +793,9 @@ async function findPathOptimal(
         generatePathDisplay(optimalPathDetails, "Optimal Path") +
         generatePathDisplay(shortestPathDetails, "Shortest Path");
 
-    statusDiv.innerHTML = fullStatusHTML + INSTRUCTIONAL_TEXT;
-
+    statusDiv.innerHTML =
+        fullStatusHTML + INSTRUCTIONAL_TEXT;
+ 
     const pathDetailsToAnimate =
         pathfindingMode === "shortest" && shortestPathDetails
             ? shortestPathDetails
@@ -983,7 +985,8 @@ export async function findPath(
             )}</span> via another node.`;
             statusDiv.innerHTML = statusHTML;
         }
-        statusDiv.innerHTML += INSTRUCTIONAL_TEXT;
+        statusDiv.innerHTML +=
+            INSTRUCTIONAL_TEXT;
         resetGraphStyles();
         return;
     }
