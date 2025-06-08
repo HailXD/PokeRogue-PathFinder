@@ -121,7 +121,7 @@ function dijkstra(
             const v = edge.to;
             if (avoidNodes.has(v) && v !== endNode) continue;
 
-            const weight = useUnitWeight ? 1 : edge.weight;
+            const weight = useUnitWeight ? 1 : 1 + (edge.weight - 1) * 3;
             const alt = distances.get(u) + weight;
 
             if (alt < distances.get(v)) {
@@ -746,12 +746,18 @@ async function findPathOptimal(
         statusHTML += `<br>`;
 
         if (bestShortestPathPermutationDetails) {
-            const fullOptimalPathString = JSON.stringify(
-                bestPermutationDetails.segments
-            );
-            const fullShortestPathString = JSON.stringify(
-                bestShortestPathPermutationDetails.segments
-            );
+            const fullOptimalPathString = JSON.stringify([
+                ...bestPermutationDetails.segments,
+                ...(bestPermutationDetails.loopSegment?.path
+                    ? [bestPermutationDetails.loopSegment.path]
+                    : []),
+            ]);
+            const fullShortestPathString = JSON.stringify([
+                ...bestShortestPathPermutationDetails.segments,
+                ...(bestShortestPathPermutationDetails.loopSegment?.path
+                    ? [bestShortestPathPermutationDetails.loopSegment.path]
+                    : []),
+            ]);
 
             const optimalTotalSteps =
                 optimalPathStepCount +
