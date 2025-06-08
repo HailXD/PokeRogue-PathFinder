@@ -24,7 +24,7 @@ export function initializeGraph() {
                     .substr(2, 9)}`,
                 from: source,
                 to: conn.to,
-                label: conn.weight > 1 ? `${Math.round(100 / conn.weight)}%` : undefined,
+                label: undefined,
                 arrows: "to",
                 color: { color: edgeColor, highlight: highlightColor },
                 font: { align: "top", size: 16, color: fontColor },
@@ -97,6 +97,16 @@ export function initializeGraph() {
         if (params.nodes.length > 0) {
             const biomeId = params.nodes[0];
             populateAndShowPokemonModal(biomeId);
+        }
+    });
+
+    networkHolder.network.on("oncontext", function (params) {
+        params.event.preventDefault();
+        const nodeId = networkHolder.network.getNodeAt(params.pointer.DOM);
+        if (nodeId) {
+            const startBiomeSelect = document.getElementById("startBiome");
+            startBiomeSelect.value = nodeId;
+            startBiomeSelect.dispatchEvent(new Event("change"));
         }
     });
 
