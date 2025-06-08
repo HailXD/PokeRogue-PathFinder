@@ -63,7 +63,10 @@ export function createMultiSelectItems(
 
         item.addEventListener("click", () => {
             const biomeValue = item.dataset.value;
-            if (selectedSet.has(biomeValue)) {
+            const wasSelected = selectedSet.has(biomeValue);
+            let changed = false;
+
+            if (wasSelected) {
                 if (
                     isTarget &&
                     options.pokemonBiomes?.has(biomeValue) &&
@@ -76,6 +79,7 @@ export function createMultiSelectItems(
                 if (isTarget) {
                     item.classList.remove("user-selected");
                 }
+                changed = true;
             } else {
                 if (
                     containerId === "avoidBiomesContainer" &&
@@ -89,15 +93,19 @@ export function createMultiSelectItems(
                 if (isTarget) {
                     item.classList.add("user-selected");
                 }
+                changed = true;
             }
-            updateSelectedIndicator(
-                selectedSet,
-                indicator,
-                containerId,
-                options
-            );
-            updateAllNodeStyles();
-            runPathfinding();
+
+            if (changed) {
+                updateSelectedIndicator(
+                    selectedSet,
+                    indicator,
+                    containerId,
+                    options
+                );
+                updateAllNodeStyles();
+                runPathfinding(isTarget);
+            }
             if (
                 containerId === "avoidBiomesContainer" &&
                 selectedTargetBiomes.has(biomeValue)
@@ -143,7 +151,7 @@ export function createMultiSelectItems(
         });
         container.appendChild(item);
     });
-    runPathfinding();
+    runPathfinding(false);
     updateSelectedIndicator(selectedSet, indicator, containerId, options);
 }
 
@@ -207,7 +215,7 @@ export function updateSelectedIndicator(
                 }
 
                 updateAllNodeStyles();
-                runPathfinding();
+                runPathfinding(listContainerId === "targetBiomesContainer");
                 if (listContainerId === "pokemonListContainer") {
                     if (onPokemonChange) {
                         onPokemonChange();

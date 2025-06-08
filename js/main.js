@@ -160,6 +160,8 @@ function updateTargetBiomesFromPokemon() {
         "includePokemonInTarget"
     );
 
+    const oldTargets = new Set(selectedTargetBiomes);
+
     const currentPokemonBiomes = new Set();
     selectedPokemon.forEach((name) => {
         const spawns = allPokemonData[name] || [];
@@ -210,7 +212,12 @@ function updateTargetBiomesFromPokemon() {
         { pokemonBiomes, includePokemonInTarget }
     );
     updateAllNodeStyles();
-    runPathfinding();
+
+    const newTargets = new Set(selectedTargetBiomes);
+    const targetsChanged =
+        oldTargets.size !== newTargets.size ||
+        [...oldTargets].some((t) => !newTargets.has(t));
+    runPathfinding(targetsChanged);
 }
 
 function initializeEventListeners() {
@@ -303,7 +310,7 @@ function initializeEventListeners() {
         "change",
         () => {
             updateTargetBiomesFromPokemon();
-            runPathfinding();
+            runPathfinding(true);
         }
     );
 
@@ -313,17 +320,27 @@ function initializeEventListeners() {
     });
 }
 
-export async function runPathfinding() {
+export async function runPathfinding(forceRecalculate = false) {
+    const startNode = startBiomeSelect.value;
+    const targetNodesInput = Array.from(selectedTargetBiomes);
+    const avoidNodesSet = new Set(selectedAvoidBiomes);
+
+    const hasAvoidedNodeInPath = Array.from(persistentPathNodeIds).some((node) =>
+        avoidNodesSet.has(node)
+    );
+
+    if (!forceRecalculate && !hasAvoidedNodeInPath) {
+        updateAllNodeStyles();
+        resetGraphStyles();
+        return;
+    }
+
     persistentPathNodeIds.clear();
     persistentPathEdgeIds.clear();
     persistentLoopEdgeIds.clear();
     visitedNodes.clear();
     resetGraphStyles();
     updateAllNodeStyles();
-
-    const startNode = startBiomeSelect.value;
-    const targetNodesInput = Array.from(selectedTargetBiomes);
-    const avoidNodesSet = new Set(selectedAvoidBiomes);
 
     await findPath(
         startNode,
