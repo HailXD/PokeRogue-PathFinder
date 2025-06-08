@@ -165,7 +165,7 @@ function dijkstra(
             const v = edge.to;
             if (avoidNodes.has(v) && v !== endNode) continue;
 
-            const weight = useUnitWeight ? 1 : 1 + (edge.weight - 1) * 5;
+            const weight = useUnitWeight ? 1 : 1 + (edge.weight - 1) * 50;
             const alt = distances.get(u) + weight;
 
             if (alt < distances.get(v)) {
