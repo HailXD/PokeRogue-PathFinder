@@ -104,7 +104,7 @@ export function createMultiSelectItems(
                     options
                 );
                 updateAllNodeStyles();
-                runPathfinding(isTarget);
+                runPathfinding(true);
             }
             if (
                 containerId === "avoidBiomesContainer" &&
@@ -215,7 +215,7 @@ export function updateSelectedIndicator(
                 }
 
                 updateAllNodeStyles();
-                runPathfinding(listContainerId === "targetBiomesContainer");
+                runPathfinding(true);
                 if (listContainerId === "pokemonListContainer") {
                     if (onPokemonChange) {
                         onPokemonChange();

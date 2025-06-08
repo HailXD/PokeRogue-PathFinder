@@ -240,6 +240,7 @@ function initializeEventListeners() {
     const includePokemonInTarget = document.getElementById(
         "includePokemonInTarget"
     );
+    const resetButton = document.getElementById("resetButton");
 
     biomeNamesSorted.forEach((biome) => {
         const option = new Option(biome.replace(/_/g, " "), biome);
@@ -317,6 +318,29 @@ function initializeEventListeners() {
     themeToggleBtn.addEventListener("click", () => {
         toggleTheme();
         resetGraphStyles();
+    });
+
+    resetButton.addEventListener("click", () => {
+        selectedPokemon.clear();
+        selectedTargetBiomes.clear();
+        selectedAvoidBiomes.clear();
+
+        document
+            .querySelectorAll(".multi-select-item.selected")
+            .forEach((item) => {
+                item.classList.remove("selected");
+            });
+
+        startBiomeSelect.value = BiomeId.TOWN;
+
+        handlePokemonSelectionChange();
+        updateSelectedIndicator(
+            selectedAvoidBiomes,
+            document.getElementById("selectedAvoidIndicator"),
+            "avoidBiomesContainer"
+        );
+        updateAllNodeStyles();
+        runPathfinding(true);
     });
 }
 
