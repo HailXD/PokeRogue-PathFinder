@@ -8,7 +8,7 @@ import {
     runPathfinding,
     selectedTargetBiomes,
 } from "./main.js";
-import { graph, biomeNamesSorted } from "./data.js";
+import { graph, biomeNamesSorted, biomePositions } from "./data.js";
 import { createTooltipElement, populateAndShowPokemonModal } from "./ui.js";
 
 export function initializeGraph() {
@@ -35,11 +35,17 @@ export function initializeGraph() {
         });
     });
 
-    const nodeData = biomeNamesSorted.map((name) => ({
-        id: name,
-        label: name.replace(/_/g, " "),
-        title: createTooltipElement(name),
-    }));
+    const nodeData = biomeNamesSorted.map((name) => {
+        const position = biomePositions[name] || { x: 0, y: 0 };
+        return {
+            id: name,
+            label: name.replace(/_/g, " "),
+            title: createTooltipElement(name),
+            x: position.x,
+            y: position.y,
+            fixed: true,
+        };
+    });
     nodes.clear();
     nodes.add(nodeData);
 
@@ -47,7 +53,7 @@ export function initializeGraph() {
     const data = { nodes: nodes, edges: edges };
 
     const options = {
-        layout: { randomSeed: 10 },
+        layout: { improvedLayout: false },
         edges: {
             smooth: {
                 type: "continuous",
@@ -57,25 +63,7 @@ export function initializeGraph() {
             font: { size: 10, align: "middle" },
             selfReference: { size: 20, angle: Math.PI / 4 },
         },
-        physics: {
-            enabled: true,
-            barnesHut: {
-                gravitationalConstant: -25000,
-                centralGravity: 0.25,
-                springLength: 180,
-                springConstant: 0.05,
-                damping: 0.09,
-                avoidOverlap: 0.6,
-            },
-            stabilization: {
-                enabled: true,
-                iterations: 1000,
-                updateInterval: 25,
-                onlyDynamicEdges: false,
-                fit: true,
-            },
-            minVelocity: 0.75,
-        },
+        physics: { enabled: false },
         interaction: {
             tooltipDelay: 200,
             hideEdgesOnDrag: true,
@@ -92,10 +80,7 @@ export function initializeGraph() {
     };
     networkHolder.network = new vis.Network(graphContainer, data, options);
 
-    networkHolder.network.on("stabilizationIterationsDone", function () {
-        networkHolder.network.setOptions({ physics: { enabled: false } });
-        networkHolder.network.moveTo({ scale: 0.70, offset: { x: 0, y: -120 } });
-    });
+    networkHolder.network.moveTo({ scale: 0.70, offset: { x: 0, y: -120 } });
 
     networkHolder.network.on("click", function (params) {
         if (params.nodes.length > 0) {
