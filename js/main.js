@@ -309,16 +309,14 @@ function initializeEventListeners() {
         }
     });
 
-    includePokemonInTarget.addEventListener(
-        "change",
-        () => {
-            updateTargetBiomesFromPokemon();
-            runPathfinding(true);
-        }
-    );
+    includePokemonInTarget.addEventListener("change", () => {
+        updateTargetBiomesFromPokemon();
+        runPathfinding(true);
+    });
 
     pathToggleButton.addEventListener("click", () => {
-        pathfindingMode = pathfindingMode === "optimal" ? "shortest" : "optimal";
+        pathfindingMode =
+            pathfindingMode === "optimal" ? "shortest" : "optimal";
         if (pathfindingMode === "shortest") {
             pathToggleButton.classList.add("active");
             pathToggleButton.textContent = "Showing Shortest Path";
@@ -363,8 +361,8 @@ export async function runPathfinding(forceRecalculate = false) {
     const targetNodesInput = Array.from(selectedTargetBiomes);
     const avoidNodesSet = new Set(selectedAvoidBiomes);
 
-    const hasAvoidedNodeInPath = Array.from(persistentPathNodeIds).some((node) =>
-        avoidNodesSet.has(node)
+    const hasAvoidedNodeInPath = Array.from(persistentPathNodeIds).some(
+        (node) => avoidNodesSet.has(node)
     );
 
     if (!forceRecalculate && !hasAvoidedNodeInPath) {

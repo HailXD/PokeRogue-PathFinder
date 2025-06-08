@@ -38,17 +38,16 @@ body {
     #graph-container {
         display: none;
     }
-    
+
     #path-toggle {
         display: none;
     }
-    
+
     .status::after {
         content: "Graph Related on PC Only";
         font-size: 0.8em;
         color: #ff0000;
     }
-
 }
 
 .graph-panel {
@@ -109,7 +108,6 @@ button#findPathBtn:hover {
     background-color: #0056b3;
 }
 
-
 #theme-toggle {
     position: fixed;
     bottom: 20px;
@@ -160,7 +158,6 @@ body.dark-theme input[type="search"] {
     color: #e0e0e0;
     border-color: #555;
 }
-
 
 body.dark-theme #theme-toggle {
     background-color: #f0f0f0;

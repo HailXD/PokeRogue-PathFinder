@@ -35,7 +35,7 @@ const INSTRUCTIONAL_TEXT = `
     highlight their biomes.<br />
     <span class="highlight-key">Hover</span> on highlighted to
     view selected Pokemon.<br />`;
- 
+
 class PriorityQueue {
     constructor() {
         this.heap = [];
@@ -97,38 +97,33 @@ class PriorityQueue {
         return this.heap.length === 0;
     }
 }
- 
+
 function updatePersistentPathData(pathDetails) {
     if (!pathDetails) return;
- 
+
     persistentPathNodeIds.clear();
     persistentPathEdgeIds.clear();
     persistentLoopEdgeIds.clear();
     visitedNodes.clear();
- 
+
     pathDetails.segments.forEach((seg) => {
         seg.forEach((node) => {
             persistentPathNodeIds.add(node);
             visitedNodes.add(node);
         });
-        getEdgeIdsForPath(seg).forEach((id) =>
-            persistentPathEdgeIds.add(id)
-        );
+        getEdgeIdsForPath(seg).forEach((id) => persistentPathEdgeIds.add(id));
     });
-    if (
-        pathDetails.loopSegment &&
-        pathDetails.loopSegment.path
-    ) {
+    if (pathDetails.loopSegment && pathDetails.loopSegment.path) {
         pathDetails.loopSegment.path.forEach((node) => {
             persistentPathNodeIds.add(node);
             visitedNodes.add(node);
         });
-        getEdgeIdsForPath(pathDetails.loopSegment.path).forEach(
-            (id) => persistentLoopEdgeIds.add(id)
+        getEdgeIdsForPath(pathDetails.loopSegment.path).forEach((id) =>
+            persistentLoopEdgeIds.add(id)
         );
     }
 }
- 
+
 function dijkstra(
     startNode,
     endNode,
@@ -508,7 +503,7 @@ async function findPathOptimal(
     statusHTML += "<br><br>";
     statusDiv.innerHTML = statusHTML;
     await new Promise((resolve) => setTimeout(resolve, 10));
- 
+
     const pathCache = new Map();
     const shortestPathCache = new Map();
     const nodesForPathCalc = [startNode, ...effectiveTargetNodes];
@@ -708,10 +703,9 @@ async function findPathOptimal(
 
     if (!bestPermutationDetails) {
         statusHTML += `No complete path visiting all targets could be found.`;
-        statusDiv.innerHTML =
-            statusHTML + INSTRUCTIONAL_TEXT;
+        statusDiv.innerHTML = statusHTML + INSTRUCTIONAL_TEXT;
         resetGraphStyles();
-        cachedPathResults = null; // No result, clear cache
+        cachedPathResults = null;
         return;
     }
 
@@ -721,10 +715,9 @@ async function findPathOptimal(
     cachedPathResults = {
         optimal: optimalPathDetails,
         shortest: shortestPathDetails,
-        statusHTML: statusHTML, // Cache the status HTML before path details are added
+        statusHTML: statusHTML,
     };
 
-    // Function to generate display HTML for a given path type
     const generatePathDisplay = (details, title) => {
         if (!details) return "";
         let html = "";
@@ -748,8 +741,7 @@ async function findPathOptimal(
                 );
             }
             if (segmentPath.length > 0)
-                lastNodeOfPreviousSegment =
-                    segmentPath[segmentPath.length - 1];
+                lastNodeOfPreviousSegment = segmentPath[segmentPath.length - 1];
         });
 
         const pathStepCount = details.segments.reduce(
@@ -793,16 +785,15 @@ async function findPathOptimal(
         generatePathDisplay(optimalPathDetails, "Optimal Path") +
         generatePathDisplay(shortestPathDetails, "Shortest Path");
 
-    statusDiv.innerHTML =
-        fullStatusHTML + INSTRUCTIONAL_TEXT;
- 
+    statusDiv.innerHTML = fullStatusHTML + INSTRUCTIONAL_TEXT;
+
     const pathDetailsToAnimate =
         pathfindingMode === "shortest" && shortestPathDetails
             ? shortestPathDetails
             : optimalPathDetails;
- 
+
     updatePersistentPathData(pathDetailsToAnimate);
- 
+
     await animatePath(
         pathDetailsToAnimate.segments,
         NODE_STYLES.PATH_ANIMATION,
@@ -833,7 +824,7 @@ async function findPathOptimal(
 
     resetGraphStyles();
 }
- 
+
 export async function findPath(
     startNode,
     targetNodesInput,
@@ -859,7 +850,7 @@ export async function findPath(
             pathfindingMode === "shortest"
                 ? cachedPathResults.shortest
                 : cachedPathResults.optimal;
- 
+
         if (pathDetailsToAnimate) {
             updatePersistentPathData(pathDetailsToAnimate);
             await animatePath(
@@ -985,8 +976,7 @@ export async function findPath(
             )}</span> via another node.`;
             statusDiv.innerHTML = statusHTML;
         }
-        statusDiv.innerHTML +=
-            INSTRUCTIONAL_TEXT;
+        statusDiv.innerHTML += INSTRUCTIONAL_TEXT;
         resetGraphStyles();
         return;
     }

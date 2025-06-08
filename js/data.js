@@ -36,42 +36,49 @@ export const BiomeId = {
 };
 
 const biomeLinksRaw = {
-  [BiomeId.TOWN]: BiomeId.PLAINS,
-  [BiomeId.PLAINS]: [ BiomeId.GRASS, BiomeId.METROPOLIS, BiomeId.LAKE ],
-  [BiomeId.GRASS]: BiomeId.TALL_GRASS,
-  [BiomeId.TALL_GRASS]: [ BiomeId.FOREST, BiomeId.CAVE ],
-  [BiomeId.SLUM]: [ BiomeId.CONSTRUCTION_SITE, [ BiomeId.SWAMP, 2 ]],
-  [BiomeId.FOREST]: [ BiomeId.JUNGLE, BiomeId.MEADOW ],
-  [BiomeId.SEA]: [ BiomeId.SEABED, BiomeId.ICE_CAVE ],
-  [BiomeId.SWAMP]: [ BiomeId.GRAVEYARD, BiomeId.TALL_GRASS ],
-  [BiomeId.BEACH]: [ BiomeId.SEA, [ BiomeId.ISLAND, 2 ]],
-  [BiomeId.LAKE]: [ BiomeId.BEACH, BiomeId.SWAMP, BiomeId.CONSTRUCTION_SITE ],
-  [BiomeId.SEABED]: [ BiomeId.CAVE, [ BiomeId.VOLCANO, 3 ]],
-  [BiomeId.MOUNTAIN]: [ BiomeId.VOLCANO, [ BiomeId.WASTELAND, 2 ], [ BiomeId.SPACE, 3 ]],
-  [BiomeId.BADLANDS]: [ BiomeId.DESERT, BiomeId.MOUNTAIN ],
-  [BiomeId.CAVE]: [ BiomeId.BADLANDS, BiomeId.LAKE, [ BiomeId.LABORATORY, 2 ]],
-  [BiomeId.DESERT]: [ BiomeId.RUINS, [ BiomeId.CONSTRUCTION_SITE, 2 ]],
-  [BiomeId.ICE_CAVE]: BiomeId.SNOWY_FOREST,
-  [BiomeId.MEADOW]: [ BiomeId.PLAINS, BiomeId.FAIRY_CAVE ],
-  [BiomeId.POWER_PLANT]: BiomeId.FACTORY,
-  [BiomeId.VOLCANO]: [ BiomeId.BEACH, [ BiomeId.ICE_CAVE, 3 ]],
-  [BiomeId.GRAVEYARD]: BiomeId.ABYSS,
-  [BiomeId.DOJO]: [ BiomeId.PLAINS, [ BiomeId.JUNGLE, 2 ], [ BiomeId.TEMPLE, 2 ]],
-  [BiomeId.FACTORY]: [ BiomeId.PLAINS, [ BiomeId.LABORATORY, 2 ]],
-  [BiomeId.RUINS]: [ BiomeId.MOUNTAIN, [ BiomeId.FOREST, 2 ]],
-  [BiomeId.WASTELAND]: BiomeId.BADLANDS,
-  [BiomeId.ABYSS]: [ BiomeId.CAVE, [ BiomeId.SPACE, 2 ], [ BiomeId.WASTELAND, 2 ]],
-  [BiomeId.SPACE]: BiomeId.RUINS,
-  [BiomeId.CONSTRUCTION_SITE]: [ BiomeId.POWER_PLANT, [ BiomeId.DOJO, 2 ]],
-  [BiomeId.JUNGLE]: [ BiomeId.TEMPLE ],
-  [BiomeId.FAIRY_CAVE]: [ BiomeId.ICE_CAVE, [ BiomeId.SPACE, 2 ]],
-  [BiomeId.TEMPLE]: [ BiomeId.DESERT, [ BiomeId.SWAMP, 2 ], [ BiomeId.RUINS, 2 ]],
-  [BiomeId.METROPOLIS]: BiomeId.SLUM,
-  [BiomeId.SNOWY_FOREST]: [ BiomeId.FOREST, [ BiomeId.MOUNTAIN, 2 ], [ BiomeId.LAKE, 2 ]],
-  [BiomeId.ISLAND]: BiomeId.SEA,
-  [BiomeId.LABORATORY]: BiomeId.CONSTRUCTION_SITE
+    [BiomeId.TOWN]: BiomeId.PLAINS,
+    [BiomeId.PLAINS]: [BiomeId.GRASS, BiomeId.METROPOLIS, BiomeId.LAKE],
+    [BiomeId.GRASS]: BiomeId.TALL_GRASS,
+    [BiomeId.TALL_GRASS]: [BiomeId.FOREST, BiomeId.CAVE],
+    [BiomeId.SLUM]: [BiomeId.CONSTRUCTION_SITE, [BiomeId.SWAMP, 2]],
+    [BiomeId.FOREST]: [BiomeId.JUNGLE, BiomeId.MEADOW],
+    [BiomeId.SEA]: [BiomeId.SEABED, BiomeId.ICE_CAVE],
+    [BiomeId.SWAMP]: [BiomeId.GRAVEYARD, BiomeId.TALL_GRASS],
+    [BiomeId.BEACH]: [BiomeId.SEA, [BiomeId.ISLAND, 2]],
+    [BiomeId.LAKE]: [BiomeId.BEACH, BiomeId.SWAMP, BiomeId.CONSTRUCTION_SITE],
+    [BiomeId.SEABED]: [BiomeId.CAVE, [BiomeId.VOLCANO, 3]],
+    [BiomeId.MOUNTAIN]: [
+        BiomeId.VOLCANO,
+        [BiomeId.WASTELAND, 2],
+        [BiomeId.SPACE, 3],
+    ],
+    [BiomeId.BADLANDS]: [BiomeId.DESERT, BiomeId.MOUNTAIN],
+    [BiomeId.CAVE]: [BiomeId.BADLANDS, BiomeId.LAKE, [BiomeId.LABORATORY, 2]],
+    [BiomeId.DESERT]: [BiomeId.RUINS, [BiomeId.CONSTRUCTION_SITE, 2]],
+    [BiomeId.ICE_CAVE]: BiomeId.SNOWY_FOREST,
+    [BiomeId.MEADOW]: [BiomeId.PLAINS, BiomeId.FAIRY_CAVE],
+    [BiomeId.POWER_PLANT]: BiomeId.FACTORY,
+    [BiomeId.VOLCANO]: [BiomeId.BEACH, [BiomeId.ICE_CAVE, 3]],
+    [BiomeId.GRAVEYARD]: BiomeId.ABYSS,
+    [BiomeId.DOJO]: [BiomeId.PLAINS, [BiomeId.JUNGLE, 2], [BiomeId.TEMPLE, 2]],
+    [BiomeId.FACTORY]: [BiomeId.PLAINS, [BiomeId.LABORATORY, 2]],
+    [BiomeId.RUINS]: [BiomeId.MOUNTAIN, [BiomeId.FOREST, 2]],
+    [BiomeId.WASTELAND]: BiomeId.BADLANDS,
+    [BiomeId.ABYSS]: [BiomeId.CAVE, [BiomeId.SPACE, 2], [BiomeId.WASTELAND, 2]],
+    [BiomeId.SPACE]: BiomeId.RUINS,
+    [BiomeId.CONSTRUCTION_SITE]: [BiomeId.POWER_PLANT, [BiomeId.DOJO, 2]],
+    [BiomeId.JUNGLE]: [BiomeId.TEMPLE],
+    [BiomeId.FAIRY_CAVE]: [BiomeId.ICE_CAVE, [BiomeId.SPACE, 2]],
+    [BiomeId.TEMPLE]: [BiomeId.DESERT, [BiomeId.SWAMP, 2], [BiomeId.RUINS, 2]],
+    [BiomeId.METROPOLIS]: BiomeId.SLUM,
+    [BiomeId.SNOWY_FOREST]: [
+        BiomeId.FOREST,
+        [BiomeId.MOUNTAIN, 2],
+        [BiomeId.LAKE, 2],
+    ],
+    [BiomeId.ISLAND]: BiomeId.SEA,
+    [BiomeId.LABORATORY]: BiomeId.CONSTRUCTION_SITE,
 };
-
 
 export const graph = new Map();
 export const allBiomes = new Set(Object.values(BiomeId));
@@ -116,140 +123,140 @@ for (const sourceBiome in biomeLinksRaw) {
 export const biomeNamesSorted = Array.from(allBiomes).sort();
 
 export const biomePositions = {
-    "ABYSS": {
-        "x": 376,
-        "y": -305
+    ABYSS: {
+        x: 376,
+        y: -305,
     },
-    "BADLANDS": {
-        "x": 347,
-        "y": -478
+    BADLANDS: {
+        x: 347,
+        y: -478,
     },
-    "BEACH": {
-        "x": 411,
-        "y": 102
+    BEACH: {
+        x: 411,
+        y: 102,
     },
-    "CAVE": {
-        "x": 154,
-        "y": -290
+    CAVE: {
+        x: 154,
+        y: -290,
     },
-    "CONSTRUCTION_SITE": {
-        "x": -211,
-        "y": -208
+    CONSTRUCTION_SITE: {
+        x: -211,
+        y: -208,
     },
-    "DESERT": {
-        "x": 30,
-        "y": -364
+    DESERT: {
+        x: 30,
+        y: -364,
     },
-    "DOJO": {
-        "x": -470,
-        "y": 1
+    DOJO: {
+        x: -470,
+        y: 1,
     },
-    "FACTORY": {
-        "x": -323,
-        "y": -296
+    FACTORY: {
+        x: -323,
+        y: -296,
     },
-    "FAIRY_CAVE": {
-        "x": 189,
-        "y": 382
+    FAIRY_CAVE: {
+        x: 189,
+        y: 382,
     },
-    "FOREST": {
-        "x": -10,
-        "y": 149
+    FOREST: {
+        x: -10,
+        y: 149,
     },
-    "GRASS": {
-        "x": -384,
-        "y": -151
+    GRASS: {
+        x: -384,
+        y: -151,
     },
-    "GRAVEYARD": {
-        "x": 147,
-        "y": -548
+    GRAVEYARD: {
+        x: 147,
+        y: -548,
     },
-    "ICE_CAVE": {
-        "x": 491,
-        "y": 362
+    ICE_CAVE: {
+        x: 491,
+        y: 362,
     },
-    "ISLAND": {
-        "x": 696,
-        "y": -87
+    ISLAND: {
+        x: 696,
+        y: -87,
     },
-    "JUNGLE": {
-        "x": -289,
-        "y": 234
+    JUNGLE: {
+        x: -289,
+        y: 234,
     },
-    "LABORATORY": {
-        "x": -120,
-        "y": -520
+    LABORATORY: {
+        x: -120,
+        y: -520,
     },
-    "LAKE": {
-        "x": 44,
-        "y": -20
+    LAKE: {
+        x: 44,
+        y: -20,
     },
-    "MEADOW": {
-        "x": -123,
-        "y": 382
+    MEADOW: {
+        x: -123,
+        y: 382,
     },
-    "METROPOLIS": {
-        "x": -595,
-        "y": -115
+    METROPOLIS: {
+        x: -595,
+        y: -115,
     },
-    "MOUNTAIN": {
-        "x": 448,
-        "y": -170
+    MOUNTAIN: {
+        x: 448,
+        y: -170,
     },
-    "PLAINS": {
-        "x": -276,
-        "y": 73
+    PLAINS: {
+        x: -276,
+        y: 73,
     },
-    "POWER_PLANT": {
-        "x": -587,
-        "y": -318
+    POWER_PLANT: {
+        x: -587,
+        y: -318,
     },
-    "RUINS": {
-        "x": 138,
-        "y": -126
+    RUINS: {
+        x: 138,
+        y: -126,
     },
-    "SEA": {
-        "x": 673,
-        "y": 190
+    SEA: {
+        x: 673,
+        y: 190,
     },
-    "SEABED": {
-        "x": 424,
-        "y": -44
+    SEABED: {
+        x: 424,
+        y: -44,
     },
-    "SLUM": {
-        "x": -436,
-        "y": -403
+    SLUM: {
+        x: -436,
+        y: -403,
     },
-    "SNOWY_FOREST": {
-        "x": 262,
-        "y": 201
+    SNOWY_FOREST: {
+        x: 262,
+        y: 201,
     },
-    "SPACE": {
-        "x": 276,
-        "y": 48
+    SPACE: {
+        x: 276,
+        y: 48,
     },
-    "SWAMP": {
-        "x": -122,
-        "y": -355
+    SWAMP: {
+        x: -122,
+        y: -355,
     },
-    "TALL_GRASS": {
-        "x": -55,
-        "y": -140
+    TALL_GRASS: {
+        x: -55,
+        y: -140,
     },
-    "TEMPLE": {
-        "x": -165,
-        "y": -57
+    TEMPLE: {
+        x: -165,
+        y: -57,
     },
-    "TOWN": {
-        "x": -516,
-        "y": 286
+    TOWN: {
+        x: -516,
+        y: 286,
     },
-    "VOLCANO": {
-        "x": 657,
-        "y": 62
+    VOLCANO: {
+        x: 657,
+        y: 62,
     },
-    "WASTELAND": {
-        "x": 627,
-        "y": -423
-    }
-}
+    WASTELAND: {
+        x: 627,
+        y: -423,
+    },
+};

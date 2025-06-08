@@ -94,7 +94,7 @@
 .selected-indicator-btn.pokemon-target .deselect-x {
     display: none;
 }
- 
+
 .status {
     border: 1px solid #ccc;
     border-radius: 4px;
@@ -110,7 +110,7 @@
     margin-top: 10px;
     height: 30rem;
 }
- 
+
 .highlight-key {
     color: #007bff;
     font-weight: bold;
@@ -295,13 +295,13 @@ body.dark-theme .selected-indicator-btn.pokemon-target {
 body.dark-theme .highlight-key {
     color: #00aaff;
 }
- 
+
 body.dark-theme .status {
     background-color: #333;
     border-color: #555;
     color: #ccc;
 }
- 
+
 body.dark-theme .modal-content {
     background-color: #1e1e1e;
     color: #e0e0e0;
