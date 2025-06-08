@@ -7,6 +7,7 @@ import {
     persistentLoopEdgeIds,
     visitedNodes,
     NODE_STYLES,
+    updateAllNodeStyles,
 } from "./main.js";
 import { resetGraphStyles } from "./graph.js";
 
@@ -147,7 +148,7 @@ function dijkstra(startNode, endNode, avoidNodes = new Set()) {
 async function animatePath(pathSegments, animationStyle, options = {}) {
     const {
         isLoop = false,
-        baseDelay = 250,
+        baseDelay = 100,
         startNode = "",
         targetNodes = new Set(),
         pokemonSpawnNodes = new Set(),
@@ -171,7 +172,9 @@ async function animatePath(pathSegments, animationStyle, options = {}) {
             },
         };
 
-        const backgroundColor = isTarget
+        const backgroundColor = isStart
+            ? NODE_STYLES.START.background
+            : isTarget
             ? NODE_STYLES.TARGET.background
             : animationStyle.background;
 
@@ -813,4 +816,5 @@ export async function findPath(
         statusHTML,
         styleOptions
     );
+    updateAllNodeStyles();
 }

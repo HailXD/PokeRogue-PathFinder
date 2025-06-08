@@ -317,6 +317,7 @@ export async function runPathfinding() {
     persistentLoopEdgeIds.clear();
     visitedNodes.clear();
     resetGraphStyles();
+    updateAllNodeStyles();
 
     const startNode = startBiomeSelect.value;
     const targetNodesInput = Array.from(selectedTargetBiomes);

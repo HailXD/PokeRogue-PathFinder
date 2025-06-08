@@ -119,8 +119,6 @@ export function initializeGraph() {
 }
 
 export function resetGraphStyles() {
-    updateAllNodeStyles();
-
     const isDark = document.body.classList.contains("dark-theme");
     const edgeColor = isDark ? "#555" : "#cccccc";
     const highlightColor = isDark ? "#777" : "#ababab";
