@@ -13,8 +13,7 @@ import { resetGraphStyles } from "./graph.js";
 
 const INSTRUCTIONAL_TEXT = `
     <br><br><hr style="border-top: 1px solid #ccc; margin: 10px 0;"><br>
-    Select <span class="highlight-key">biomes</span> and click
-    <span class="highlight-key">"Find Path"</span><br />
+    Select <span class="highlight-key">biomes</span> to find the optimal path.<br />
     <span class="highlight-key">Click</span> on a biome to see
     list full list of spawn.<br />
     <span class="highlight-key">Search</span> for Pokemon to
@@ -148,7 +147,7 @@ function dijkstra(startNode, endNode, avoidNodes = new Set()) {
 async function animatePath(pathSegments, animationStyle, options = {}) {
     const {
         isLoop = false,
-        baseDelay = 100,
+        baseDelay = 50,
         startNode = "",
         targetNodes = new Set(),
         pokemonSpawnNodes = new Set(),
@@ -427,7 +426,7 @@ async function findPathOptimal(
     const pathCache = new Map();
     const nodesForPathCalc = [startNode, ...effectiveTargetNodes];
 
-    statusHTML += "Calculating paths between targets...<br>";
+    statusHTML += "Finding optimal path...<br>";
     statusDiv.innerHTML = statusHTML;
     await new Promise((resolve) => setTimeout(resolve, 10));
 
@@ -453,7 +452,7 @@ async function findPathOptimal(
             findNearestNeighborPath(startNode, effectiveTargetNodes, pathCache),
         ];
     } else {
-        statusHTML += `Calculating optimal path for ${effectiveTargetNodes.length} targets...<br>`;
+        statusHTML += `Finding optimal path for ${effectiveTargetNodes.length} targets...<br>`;
         permutations = getPermutations(effectiveTargetNodes);
     }
     statusDiv.innerHTML = statusHTML;
@@ -675,7 +674,7 @@ async function findPathOptimal(
                     NODE_STYLES.LOOP_ANIMATION,
                     {
                         isLoop: true,
-                        baseDelay: 300,
+                        baseDelay: 50,
                         startNode: startNode,
                         targetNodes: styleOptions.allTargetNodes,
                         pokemonSpawnNodes: styleOptions.pokemonSpawnNodes,
@@ -775,7 +774,7 @@ export async function findPath(
                 NODE_STYLES.LOOP_ANIMATION,
                 {
                     isLoop: true,
-                    baseDelay: 300,
+                    baseDelay: 50,
                     startNode: startNode,
                     targetNodes: styleOptions.allTargetNodes,
                     pokemonSpawnNodes: styleOptions.pokemonSpawnNodes,

@@ -210,6 +210,7 @@ function updateTargetBiomesFromPokemon() {
         { pokemonBiomes, includePokemonInTarget }
     );
     updateAllNodeStyles();
+    runPathfinding();
 }
 
 function initializeEventListeners() {
@@ -228,7 +229,6 @@ function initializeEventListeners() {
     const avoidBiomesContainer = document.getElementById(
         "avoidBiomesContainer"
     );
-    const findPathBtn = document.getElementById("findPathBtn");
     const themeToggleBtn = document.getElementById("theme-toggle");
     const includePokemonInTarget = document.getElementById(
         "includePokemonInTarget"
@@ -271,9 +271,8 @@ function initializeEventListeners() {
         }
 
         updateAllNodeStyles();
+        runPathfinding();
     });
-
-    findPathBtn.addEventListener("click", runPathfinding);
 
     pokemonSearchInput.addEventListener("input", () =>
         handleSearch(pokemonSearchInput, pokemonListContainer)
@@ -302,7 +301,10 @@ function initializeEventListeners() {
 
     includePokemonInTarget.addEventListener(
         "change",
-        updateTargetBiomesFromPokemon
+        () => {
+            updateTargetBiomesFromPokemon();
+            runPathfinding();
+        }
     );
 
     themeToggleBtn.addEventListener("click", () => {

@@ -9,6 +9,7 @@ import {
     nodes,
     updateAllNodeStyles,
     networkHolder,
+    runPathfinding,
 } from "./main.js";
 
 export const rarityOrder = [
@@ -96,7 +97,7 @@ export function createMultiSelectItems(
                 options
             );
             updateAllNodeStyles();
-
+            runPathfinding();
             if (
                 containerId === "avoidBiomesContainer" &&
                 selectedTargetBiomes.has(biomeValue)
@@ -142,6 +143,7 @@ export function createMultiSelectItems(
         });
         container.appendChild(item);
     });
+    runPathfinding();
     updateSelectedIndicator(selectedSet, indicator, containerId, options);
 }
 
@@ -205,7 +207,7 @@ export function updateSelectedIndicator(
                 }
 
                 updateAllNodeStyles();
-
+                runPathfinding();
                 if (listContainerId === "pokemonListContainer") {
                     if (onPokemonChange) {
                         onPokemonChange();
