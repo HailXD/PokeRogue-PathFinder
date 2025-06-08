@@ -709,7 +709,16 @@ async function findPathOptimal(
                 lastNodeOfPreviousSegment = segmentPath[segmentPath.length - 1];
         });
 
-        statusHTML += `<b>Optimal Path:<br></b>${fullOptimalPathDisplay}<br>`;
+        const optimalPathStepCount = bestPermutationDetails.segments.reduce(
+            (acc, seg) => acc + seg.length - 1,
+            0
+        );
+        statusHTML += `<b>Optimal Path (${
+            optimalPathStepCount +
+            (bestPermutationDetails.loopSegment
+                ? bestPermutationDetails.loopSegment.path.length - 1
+                : 0)
+        } Steps):<br></b>${fullOptimalPathDisplay}<br>`;
         statusHTML += `<br>`;
 
         let loopPathDisplay = "N/A";
@@ -735,7 +744,10 @@ async function findPathOptimal(
             );
         }
 
-        statusHTML += `<b>Optimal Loop Path:<br></b>${loopPathDisplay}<br>`;
+        const loopPathStepCount = bestPermutationDetails.loopSegment
+            ? bestPermutationDetails.loopSegment.path.length - 1
+            : 0;
+        statusHTML += `<b>Optimal Loop Path (${loopPathStepCount} Steps):<br></b>${loopPathDisplay}<br>`;
         statusHTML += `<br>`;
 
         if (bestShortestPathPermutationDetails) {
@@ -746,7 +758,24 @@ async function findPathOptimal(
                 bestShortestPathPermutationDetails.segments
             );
 
-            if (fullOptimalPathString !== fullShortestPathString) {
+            const optimalTotalSteps =
+                optimalPathStepCount +
+                (bestPermutationDetails.loopSegment
+                    ? bestPermutationDetails.loopSegment.path.length - 1
+                    : 0);
+            const shortestTotalSteps =
+                bestShortestPathPermutationDetails.segments.reduce(
+                    (acc, seg) => acc + seg.length - 1,
+                    0
+                ) +
+                (bestShortestPathPermutationDetails.loopSegment
+                    ? bestShortestPathPermutationDetails.loopSegment.path.length - 1
+                    : 0);
+
+            if (
+                fullOptimalPathString !== fullShortestPathString &&
+                shortestTotalSteps < optimalTotalSteps
+            ) {
                 const shortestPathCostWithoutLoop =
                     bestShortestPathPermutationDetails.totalCost -
                     (bestShortestPathPermutationDetails.loopSegment
@@ -781,7 +810,18 @@ async function findPathOptimal(
                     }
                 );
 
-                statusHTML += `<b>Shortest Path:<br></b>${fullShortestPathDisplay}<br>`;
+                const shortestPathStepCount =
+                    bestShortestPathPermutationDetails.segments.reduce(
+                        (acc, seg) => acc + seg.length - 1,
+                        0
+                    );
+                statusHTML += `<b>Shortest Path (${
+                    shortestPathStepCount +
+                    (bestShortestPathPermutationDetails.loopSegment
+                        ? bestShortestPathPermutationDetails.loopSegment.path
+                              .length - 1
+                        : 0)
+                } Steps):<br></b>${fullShortestPathDisplay}<br>`;
                 statusHTML += `<br>`;
 
                 let shortestLoopPathDisplay = "N/A";
@@ -812,7 +852,12 @@ async function findPathOptimal(
                     );
                 }
 
-                statusHTML += `<b>Shortest Loop Path:<br></b>${shortestLoopPathDisplay}<br>`;
+                const shortestLoopPathStepCount =
+                    bestShortestPathPermutationDetails.loopSegment
+                        ? bestShortestPathPermutationDetails.loopSegment.path
+                              .length - 1
+                        : 0;
+                statusHTML += `<b>Shortest Loop Path (${shortestLoopPathStepCount} Steps):<br></b>${shortestLoopPathDisplay}<br>`;
                 statusHTML += `<br>`;
             }
         }
@@ -930,7 +975,8 @@ export async function findPath(
                 persistentLoopEdgeIds.add(id)
             );
 
-            statusHTML += `<br><b>Cycle:</b> ${formatPathWithIntermediates(
+            const cycleStepCount = roundTripData.path.length - 1;
+            statusHTML += `<br><b>Cycle (${cycleStepCount} Steps):</b> ${formatPathWithIntermediates(
                 roundTripData.path,
                 startNode,
                 [startNode],
