@@ -112,7 +112,11 @@
             </div>
 
             <div class="graph-panel">
-                <div id="graph-container"></div>
+                <div class="graph-info">
+                    Some routes are not guaranteed to appear.<br>Optimal path (Graph path) shows the highest probability route to take.<br>Shortest path (In the console, if it's not then the optimal path is the shortest path) does not take into account probability of paths appearing and is the shortest.
+                    <br>If you do get side tracked, right click where you are now at and the map will be updated.
+                </div>
+                <div id="graph-container" style="flex-grow: 1;"></div>
             </div>
         </div>
 

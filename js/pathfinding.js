@@ -695,7 +695,7 @@ async function findPathOptimal(
         });
 
         statusHTML += `<b>Optimal Path (Highest Probability):<br></b>${fullOptimalPathDisplay}<br>`;
-        statusHTML += `<b>Cost:</b> ${pathCostWithoutLoop}<br><br>`;
+        statusHTML += `<br>`;
 
         let loopPathDisplay = "N/A";
         let loopCostDisplay = "0";
@@ -721,8 +721,7 @@ async function findPathOptimal(
         }
 
         statusHTML += `<b>Optimal Loop Path (Highest Probability):<br></b>${loopPathDisplay}<br>`;
-        statusHTML += `<b>Loop Cost:</b> ${loopCostDisplay}<br><br>`;
-        statusHTML += `<b>Total Optimal Cost:</b> ${bestPermutationDetails.totalCost}<br><br>`;
+        statusHTML += `<br>`;
 
         if (bestShortestPathPermutationDetails) {
             const fullOptimalPathString = JSON.stringify(
@@ -768,7 +767,7 @@ async function findPathOptimal(
                 );
 
                 statusHTML += `<b>Shortest Path:<br></b>${fullShortestPathDisplay}<br>`;
-                statusHTML += `<b>Cost:</b> ${shortestPathCostWithoutLoop}<br><br>`;
+                statusHTML += `<br>`;
 
                 let shortestLoopPathDisplay = "N/A";
                 let shortestLoopCostDisplay = "0";
@@ -799,8 +798,7 @@ async function findPathOptimal(
                 }
 
                 statusHTML += `<b>Shortest Loop Path:<br></b>${shortestLoopPathDisplay}<br>`;
-                statusHTML += `<b>Loop Cost:</b> ${shortestLoopCostDisplay}<br><br>`;
-                statusHTML += `<b>Total Shortest Cost:</b> ${bestShortestPathPermutationDetails.totalCost}<br>`;
+                statusHTML += `<br>`;
             }
         }
 
@@ -923,7 +921,7 @@ export async function findPath(
                 [startNode],
                 true
             )}<br>`;
-            statusHTML += `<b>Cost:</b> ${roundTripData.cost}`;
+            statusHTML += ``;
             statusDiv.innerHTML = statusHTML;
             await animatePath(
                 [roundTripData.path],
