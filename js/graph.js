@@ -94,7 +94,7 @@ export function initializeGraph() {
 
     networkHolder.network.on("stabilizationIterationsDone", function () {
         networkHolder.network.setOptions({ physics: { enabled: false } });
-        networkHolder.network.moveTo({ scale: 0.70, offset: { x: 0, y: -90 } });
+        networkHolder.network.moveTo({ scale: 0.70, offset: { x: 0, y: -120 } });
     });
 
     networkHolder.network.on("click", function (params) {
