@@ -11,6 +11,19 @@ import {
 } from "./main.js";
 import { resetGraphStyles } from "./graph.js";
 
+let cachedPathResults = null;
+let lastPathfindingQueryKey = null;
+
+function generateQueryKey(startNode, targetNodes, avoidNodesSet) {
+    const sortedTargets = [...targetNodes].sort();
+    const sortedAvoids = [...Array.from(avoidNodesSet)].sort();
+    return JSON.stringify({
+        start: startNode,
+        targets: sortedTargets,
+        avoids: sortedAvoids,
+    });
+}
+
 const INSTRUCTIONAL_TEXT = `
     <br><br><hr style="border-top: 1px solid #ccc; margin: 10px 0;"><br>
     Select <span class="highlight-key">biomes</span> to find the optimal path.<br />
@@ -84,7 +97,38 @@ class PriorityQueue {
         return this.heap.length === 0;
     }
 }
-
+ 
+function updatePersistentPathData(pathDetails) {
+    if (!pathDetails) return;
+ 
+    persistentPathNodeIds.clear();
+    persistentPathEdgeIds.clear();
+    persistentLoopEdgeIds.clear();
+    visitedNodes.clear();
+ 
+    pathDetails.segments.forEach((seg) => {
+        seg.forEach((node) => {
+            persistentPathNodeIds.add(node);
+            visitedNodes.add(node);
+        });
+        getEdgeIdsForPath(seg).forEach((id) =>
+            persistentPathEdgeIds.add(id)
+        );
+    });
+    if (
+        pathDetails.loopSegment &&
+        pathDetails.loopSegment.path
+    ) {
+        pathDetails.loopSegment.path.forEach((node) => {
+            persistentPathNodeIds.add(node);
+            visitedNodes.add(node);
+        });
+        getEdgeIdsForPath(pathDetails.loopSegment.path).forEach(
+            (id) => persistentLoopEdgeIds.add(id)
+        );
+    }
+}
+ 
 function dijkstra(
     startNode,
     endNode,
@@ -432,6 +476,13 @@ async function findPathOptimal(
     styleOptions,
     pathfindingMode
 ) {
+    const queryKey = generateQueryKey(
+        startNode,
+        effectiveTargetNodes,
+        avoidNodesSet
+    );
+    lastPathfindingQueryKey = queryKey;
+
     let statusHTML = initialStatusHTML;
     statusHTML += `Starting from: <span class="highlight-start">${startNode.replace(
         /_/g,
@@ -457,7 +508,7 @@ async function findPathOptimal(
     statusHTML += "<br><br>";
     statusDiv.innerHTML = statusHTML;
     await new Promise((resolve) => setTimeout(resolve, 10));
-
+ 
     const pathCache = new Map();
     const shortestPathCache = new Map();
     const nodesForPathCalc = [startNode, ...effectiveTargetNodes];
@@ -657,140 +708,130 @@ async function findPathOptimal(
 
     if (!bestPermutationDetails) {
         statusHTML += `No complete path visiting all targets could be found.`;
-    } else {
-        const optimalPathDetails = bestPermutationDetails;
-        const shortestPathDetails = bestShortestPathPermutationDetails;
+        statusDiv.innerHTML = statusHTML + INSTRUCTIONAL_TEXT;
+        resetGraphStyles();
+        cachedPathResults = null; // No result, clear cache
+        return;
+    }
 
-        const pathDetailsToAnimate =
-            pathfindingMode === "shortest" && shortestPathDetails
-                ? shortestPathDetails
-                : optimalPathDetails;
+    const optimalPathDetails = bestPermutationDetails;
+    const shortestPathDetails = bestShortestPathPermutationDetails;
 
-        // Always add nodes from the animated path to persistent sets for styling
-        pathDetailsToAnimate.segments.forEach((seg) => {
-            seg.forEach((node) => {
-                persistentPathNodeIds.add(node);
-                visitedNodes.add(node);
-            });
-            getEdgeIdsForPath(seg).forEach((id) =>
-                persistentPathEdgeIds.add(id)
-            );
+    cachedPathResults = {
+        optimal: optimalPathDetails,
+        shortest: shortestPathDetails,
+        statusHTML: statusHTML, // Cache the status HTML before path details are added
+    };
+
+    // Function to generate display HTML for a given path type
+    const generatePathDisplay = (details, title) => {
+        if (!details) return "";
+        let html = "";
+        let fullPathDisplay = "";
+        let lastNodeOfPreviousSegment = null;
+        details.segments.forEach((segmentPath, index) => {
+            let displaySegment = segmentPath;
+            if (
+                index > 0 &&
+                segmentPath.length > 0 &&
+                segmentPath[0] === lastNodeOfPreviousSegment
+            ) {
+                displaySegment = segmentPath.slice(1);
+            }
+            if (displaySegment.length > 0) {
+                if (fullPathDisplay !== "") fullPathDisplay += " → ";
+                fullPathDisplay += formatPathWithIntermediates(
+                    displaySegment,
+                    startNode,
+                    details.permutation
+                );
+            }
+            if (segmentPath.length > 0)
+                lastNodeOfPreviousSegment =
+                    segmentPath[segmentPath.length - 1];
         });
+
+        const pathStepCount = details.segments.reduce(
+            (acc, seg) => acc + (seg.length > 0 ? seg.length - 1 : 0),
+            0
+        );
+        html += `<b>${title} (${pathStepCount} Steps):<br></b>${fullPathDisplay}<br><br>`;
+
+        let loopPathDisplay = "N/A";
         if (
-            pathDetailsToAnimate.loopSegment &&
-            pathDetailsToAnimate.loopSegment.path
+            details.loopSegment &&
+            details.loopSegment.path.length > 0 &&
+            details.loopSegment.cost !== Infinity
         ) {
-            pathDetailsToAnimate.loopSegment.path.forEach((node) => {
-                persistentPathNodeIds.add(node);
-                visitedNodes.add(node);
-            });
-            getEdgeIdsForPath(pathDetailsToAnimate.loopSegment.path).forEach(
-                (id) => persistentLoopEdgeIds.add(id)
+            const loopTargetsContext = [
+                details.permutation[0],
+                details.permutation[details.permutation.length - 1],
+            ];
+            loopPathDisplay = formatPathWithIntermediates(
+                details.loopSegment.path,
+                startNode,
+                loopTargetsContext,
+                true
             );
         }
 
-        // Function to generate display HTML for a given path type
-        const generatePathDisplay = (details, title) => {
-            if (!details) return "";
-            let html = "";
-            let fullPathDisplay = "";
-            let lastNodeOfPreviousSegment = null;
-            details.segments.forEach((segmentPath, index) => {
-                let displaySegment = segmentPath;
-                if (
-                    index > 0 &&
-                    segmentPath.length > 0 &&
-                    segmentPath[0] === lastNodeOfPreviousSegment
-                ) {
-                    displaySegment = segmentPath.slice(1);
-                }
-                if (displaySegment.length > 0) {
-                    if (fullPathDisplay !== "") fullPathDisplay += " → ";
-                    fullPathDisplay += formatPathWithIntermediates(
-                        displaySegment,
-                        startNode,
-                        details.permutation
-                    );
-                }
-                if (segmentPath.length > 0)
-                    lastNodeOfPreviousSegment =
-                        segmentPath[segmentPath.length - 1];
-            });
+        const loopPathStepCount = details.loopSegment
+            ? details.loopSegment.path.length > 0
+                ? details.loopSegment.path.length - 1
+                : 0
+            : 0;
+        html += `<b>${title.replace(
+            "Path",
+            "Loop Path"
+        )} (${loopPathStepCount} Steps):<br></b>${loopPathDisplay}<br><br>`;
+        return html;
+    };
 
-            const pathStepCount = details.segments.reduce(
-                (acc, seg) => acc + (seg.length > 0 ? seg.length - 1 : 0),
-                0
-            );
-            html += `<b>${title} (${pathStepCount} Steps):<br></b>${fullPathDisplay}<br><br>`;
+    const fullStatusHTML =
+        statusHTML +
+        generatePathDisplay(optimalPathDetails, "Optimal Path") +
+        generatePathDisplay(shortestPathDetails, "Shortest Path");
 
-            let loopPathDisplay = "N/A";
-            if (
-                details.loopSegment &&
-                details.loopSegment.path.length > 0 &&
-                details.loopSegment.cost !== Infinity
-            ) {
-                const loopTargetsContext = [
-                    details.permutation[0],
-                    details.permutation[details.permutation.length - 1],
-                ];
-                loopPathDisplay = formatPathWithIntermediates(
-                    details.loopSegment.path,
-                    startNode,
-                    loopTargetsContext,
-                    true
-                );
-            }
+    statusDiv.innerHTML = fullStatusHTML + INSTRUCTIONAL_TEXT;
 
-            const loopPathStepCount = details.loopSegment
-                ? details.loopSegment.path.length > 0
-                    ? details.loopSegment.path.length - 1
-                    : 0
-                : 0;
-            html += `<b>${title.replace(
-                "Path",
-                "Loop Path"
-            )} (${loopPathStepCount} Steps):<br></b>${loopPathDisplay}<br><br>`;
-            return html;
-        };
+    const pathDetailsToAnimate =
+        pathfindingMode === "shortest" && shortestPathDetails
+            ? shortestPathDetails
+            : optimalPathDetails;
+ 
+    updatePersistentPathData(pathDetailsToAnimate);
+ 
+    await animatePath(
+        pathDetailsToAnimate.segments,
+        NODE_STYLES.PATH_ANIMATION,
+        {
+            startNode: startNode,
+            targetNodes: styleOptions.allTargetNodes,
+            pokemonSpawnNodes: styleOptions.pokemonSpawnNodes,
+        }
+    );
 
-        statusHTML += generatePathDisplay(optimalPathDetails, "Optimal Path");
-        statusHTML += generatePathDisplay(
-            shortestPathDetails,
-            "Shortest Path"
-        );
-
+    if (
+        pathDetailsToAnimate.loopSegment &&
+        pathDetailsToAnimate.loopSegment.path.length > 0 &&
+        pathDetailsToAnimate.loopSegment.cost !== Infinity
+    ) {
         await animatePath(
-            pathDetailsToAnimate.segments,
-            NODE_STYLES.PATH_ANIMATION,
+            [pathDetailsToAnimate.loopSegment.path],
+            NODE_STYLES.LOOP_ANIMATION,
             {
+                isLoop: true,
+                baseDelay: 50,
                 startNode: startNode,
                 targetNodes: styleOptions.allTargetNodes,
                 pokemonSpawnNodes: styleOptions.pokemonSpawnNodes,
             }
         );
-
-        if (
-            pathDetailsToAnimate.loopSegment &&
-            pathDetailsToAnimate.loopSegment.path.length > 0 &&
-            pathDetailsToAnimate.loopSegment.cost !== Infinity
-        ) {
-            await animatePath(
-                [pathDetailsToAnimate.loopSegment.path],
-                NODE_STYLES.LOOP_ANIMATION,
-                {
-                    isLoop: true,
-                    baseDelay: 50,
-                    startNode: startNode,
-                    targetNodes: styleOptions.allTargetNodes,
-                    pokemonSpawnNodes: styleOptions.pokemonSpawnNodes,
-                }
-            );
-        }
     }
-    statusDiv.innerHTML = statusHTML + INSTRUCTIONAL_TEXT;
+
     resetGraphStyles();
 }
-
+ 
 export async function findPath(
     startNode,
     targetNodesInput,
@@ -800,13 +841,61 @@ export async function findPath(
     pathfindingMode = "optimal"
 ) {
     const statusDiv = document.getElementById("status");
-    statusDiv.innerHTML = "Processing...";
-    let statusHTML = "";
+    const queryKey = generateQueryKey(
+        startNode,
+        targetNodesInput,
+        avoidNodesSet
+    );
 
     const styleOptions = {
         allTargetNodes: allTargetNodes,
         pokemonSpawnNodes: pokemonSpawnNodes,
     };
+
+    if (queryKey === lastPathfindingQueryKey && cachedPathResults) {
+        const pathDetailsToAnimate =
+            pathfindingMode === "shortest"
+                ? cachedPathResults.shortest
+                : cachedPathResults.optimal;
+ 
+        if (pathDetailsToAnimate) {
+            updatePersistentPathData(pathDetailsToAnimate);
+            await animatePath(
+                pathDetailsToAnimate.segments,
+                NODE_STYLES.PATH_ANIMATION,
+                {
+                    startNode: startNode,
+                    targetNodes: styleOptions.allTargetNodes,
+                    pokemonSpawnNodes: styleOptions.pokemonSpawnNodes,
+                }
+            );
+            if (
+                pathDetailsToAnimate.loopSegment &&
+                pathDetailsToAnimate.loopSegment.path.length > 0 &&
+                pathDetailsToAnimate.loopSegment.cost !== Infinity
+            ) {
+                await animatePath(
+                    [pathDetailsToAnimate.loopSegment.path],
+                    NODE_STYLES.LOOP_ANIMATION,
+                    {
+                        isLoop: true,
+                        baseDelay: 50,
+                        startNode: startNode,
+                        targetNodes: styleOptions.allTargetNodes,
+                        pokemonSpawnNodes: styleOptions.pokemonSpawnNodes,
+                    }
+                );
+            }
+            resetGraphStyles();
+            updateAllNodeStyles();
+        }
+        return;
+    }
+
+    lastPathfindingQueryKey = queryKey;
+    cachedPathResults = null;
+    statusDiv.innerHTML = "Processing...";
+    let statusHTML = "";
 
     if (!startNode) {
         statusDiv.textContent = "Please select a start biome.";
