@@ -41,12 +41,8 @@ body {
         display: none;
     }
 
-    #pokemonSearchContainer {
-        display: none;
-    }
-
     .status::after {
-        content: "(PC Only)";
+        content: "Graph Related on PC Only";
         font-size: 0.8em;
         color: #ff0000;
     }
