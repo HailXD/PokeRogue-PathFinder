@@ -278,7 +278,7 @@ function initializeEventListeners() {
         }
 
         updateAllNodeStyles();
-        runPathfinding();
+        runPathfinding(true);
     });
 
     pokemonSearchInput.addEventListener("input", () =>
