@@ -394,6 +394,8 @@ export function createTooltipElement(biomeId) {
         tooltipElement.append("Select Pokemon to highlight spawns.");
         tooltipElement.appendChild(document.createElement("br"));
         tooltipElement.append(" Click node for full spawn list.");
+        tooltipElement.appendChild(document.createElement("br"));
+        tooltipElement.append(" Right Click node to set as start.");
         return tooltipElement;
     }
 
@@ -405,6 +407,8 @@ export function createTooltipElement(biomeId) {
         tooltipElement.append("No selected Pokémon spawns in this biome.");
         tooltipElement.appendChild(document.createElement("br"));
         tooltipElement.append("Click node for full spawn list.");
+        tooltipElement.appendChild(document.createElement("br"));
+        tooltipElement.append(" Right Click node to set as start.");
         return tooltipElement;
     }
 
@@ -416,6 +420,8 @@ export function createTooltipElement(biomeId) {
     footer.className = "tooltip-footer";
     footer.textContent = "Click node for full spawn list.";
     tooltipElement.appendChild(footer);
+
+    tooltipElement.append(" Right Click node to set as start.");
 
     return tooltipElement;
 }

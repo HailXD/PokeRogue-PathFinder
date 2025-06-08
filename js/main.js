@@ -270,25 +270,7 @@ function initializeEventListeners() {
         updateAllNodeStyles();
     });
 
-    findPathBtn.addEventListener("click", async () => {
-        persistentPathNodeIds.clear();
-        persistentPathEdgeIds.clear();
-        persistentLoopEdgeIds.clear();
-        visitedNodes.clear();
-        resetGraphStyles();
-
-        const startNode = startBiomeSelect.value;
-        const targetNodesInput = Array.from(selectedTargetBiomes);
-        const avoidNodesSet = new Set(selectedAvoidBiomes);
-
-        await findPath(
-            startNode,
-            targetNodesInput,
-            avoidNodesSet,
-            pokemonBiomes,
-            selectedTargetBiomes
-        );
-    });
+    findPathBtn.addEventListener("click", runPathfinding);
 
     pokemonSearchInput.addEventListener("input", () =>
         handleSearch(pokemonSearchInput, pokemonListContainer)
@@ -324,6 +306,26 @@ function initializeEventListeners() {
         toggleTheme();
         resetGraphStyles();
     });
+}
+
+export async function runPathfinding() {
+    persistentPathNodeIds.clear();
+    persistentPathEdgeIds.clear();
+    persistentLoopEdgeIds.clear();
+    visitedNodes.clear();
+    resetGraphStyles();
+
+    const startNode = startBiomeSelect.value;
+    const targetNodesInput = Array.from(selectedTargetBiomes);
+    const avoidNodesSet = new Set(selectedAvoidBiomes);
+
+    await findPath(
+        startNode,
+        targetNodesInput,
+        avoidNodesSet,
+        pokemonBiomes,
+        selectedTargetBiomes
+    );
 }
 
 async function initializeApp() {

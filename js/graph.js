@@ -5,6 +5,8 @@ import {
     updateAllNodeStyles,
     persistentPathEdgeIds,
     persistentLoopEdgeIds,
+    runPathfinding,
+    selectedTargetBiomes,
 } from "./main.js";
 import { graph, biomeNamesSorted } from "./data.js";
 import { createTooltipElement, populateAndShowPokemonModal } from "./ui.js";
@@ -107,6 +109,9 @@ export function initializeGraph() {
             const startBiomeSelect = document.getElementById("startBiome");
             startBiomeSelect.value = nodeId;
             startBiomeSelect.dispatchEvent(new Event("change"));
+            if (selectedTargetBiomes.size > 0) {
+                runPathfinding();
+            }
         }
     });
 
