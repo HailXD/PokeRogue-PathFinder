@@ -344,13 +344,6 @@ body.dark-theme #resetButton:hover {
     border-color: #a94442;
 }
 
-.graph-toggle-container {
-    position: absolute;;
-    bottom: 75%;
-    right: 60%;
-    z-index: 10;
-}
-
 #path-toggle {
     padding: 8px 12px;
     border: 1px solid #007bff;
@@ -358,6 +351,7 @@ body.dark-theme #resetButton:hover {
     color: #004085;
     border-radius: 4px;
     cursor: pointer;
+    width: 100%;
     transition: background-color 0.2s, border-color 0.2s;
 }
 

@@ -37,6 +37,9 @@
                     <span class="highlight-key">Hover</span> on highlighted to
                     view selected Pokemon.<br />
                 </div>
+                <div class="graph-toggle-container">
+                    <button id="path-toggle" class="button">Showing Optimal Path</button>
+                </div>
                 <button id="resetButton" class="button">Reset</button>
                 <div class="control-group">
                     <label for="startBiome">Start Biome:</label>
@@ -116,13 +119,11 @@
             <div class="graph-panel">
                 <div class="graph-info">
                     Some routes are not guaranteed to appear.
-                    <br><span class="highlight-key">Optimal path</span> (Graph path) shows the highest probability route to take. (Avoids Probability Paths)
+                    <br><span class="highlight-key">Optimal path</span> shows the highest probability route to take. (Avoids Probability Paths)
                     <br><span class="highlight-orange">Shortest path</span> does not take into account probability of paths appearing and is the most direct route to take.
                     <br>If you do get side tracked, <span class="highlight-key">Right-click</span> where you are now at and the map will be updated.
+                    <br>You can toggle between which path is shown on the graph by clicking on the <span class="highlight-key">Showing Optimal Path</span> or <span class="highlight-orange">Showing Shortest Path</span> button.
                     <br>Paths that have probabilities of appearing are highlighted in <span class="highlight-orange">Orange</span>.
-                </div>
-                <div class="graph-toggle-container">
-                    <button id="path-toggle" class="button">Showing Optimal Path</button>
                 </div>
                 <div id="graph-container" style="flex-grow: 1;"></div>
             </div>
