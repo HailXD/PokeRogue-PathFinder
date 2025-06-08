@@ -709,7 +709,7 @@ async function findPathOptimal(
                 lastNodeOfPreviousSegment = segmentPath[segmentPath.length - 1];
         });
 
-        statusHTML += `<b>Optimal Path (Highest Probability):<br></b>${fullOptimalPathDisplay}<br>`;
+        statusHTML += `<b>Optimal Path:<br></b>${fullOptimalPathDisplay}<br>`;
         statusHTML += `<br>`;
 
         let loopPathDisplay = "N/A";
@@ -735,7 +735,7 @@ async function findPathOptimal(
             );
         }
 
-        statusHTML += `<b>Optimal Loop Path (Highest Probability):<br></b>${loopPathDisplay}<br>`;
+        statusHTML += `<b>Optimal Loop Path:<br></b>${loopPathDisplay}<br>`;
         statusHTML += `<br>`;
 
         if (bestShortestPathPermutationDetails) {
