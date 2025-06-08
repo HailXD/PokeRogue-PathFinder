@@ -713,7 +713,7 @@ async function findPathOptimal(
             (acc, seg) => acc + seg.length - 1,
             0
         );
-        statusHTML += `<b>Optimal Path:<br></b>${fullOptimalPathDisplay}<br>`;
+        statusHTML += `<b>Optimal Path (${optimalPathStepCount} Steps):<br></b>${fullOptimalPathDisplay}<br>`;
         statusHTML += `<br>`;
 
         let loopPathDisplay = "N/A";
@@ -742,7 +742,7 @@ async function findPathOptimal(
         const loopPathStepCount = bestPermutationDetails.loopSegment
             ? bestPermutationDetails.loopSegment.path.length - 1
             : 0;
-        statusHTML += `<b>Optimal Loop Path:<br></b>${loopPathDisplay}<br>`;
+        statusHTML += `<b>Optimal Loop Path (${loopPathStepCount} Steps):<br></b>${loopPathDisplay}<br>`;
         statusHTML += `<br>`;
 
         if (bestShortestPathPermutationDetails) {
@@ -816,7 +816,7 @@ async function findPathOptimal(
                         (acc, seg) => acc + seg.length - 1,
                         0
                     );
-                statusHTML += `<b>Shortest Path:<br></b>${fullShortestPathDisplay}<br>`;
+                statusHTML += `<b>Shortest Path (${shortestPathStepCount} Steps):<br></b>${fullShortestPathDisplay}<br>`;
                 statusHTML += `<br>`;
 
                 let shortestLoopPathDisplay = "N/A";
@@ -852,7 +852,7 @@ async function findPathOptimal(
                         ? bestShortestPathPermutationDetails.loopSegment.path
                               .length - 1
                         : 0;
-                statusHTML += `<b>Shortest Loop Path:<br></b>${shortestLoopPathDisplay}<br>`;
+                statusHTML += `<b>Shortest Loop Path (${shortestLoopPathStepCount} Steps):<br></b>${shortestLoopPathDisplay}<br>`;
                 statusHTML += `<br>`;
             }
         }
@@ -971,7 +971,7 @@ export async function findPath(
             );
 
             const cycleStepCount = roundTripData.path.length - 1;
-            statusHTML += `<br><b>Cycle:</b> ${formatPathWithIntermediates(
+            statusHTML += `<br><b>Cycle (${cycleStepCount} Steps):</b> ${formatPathWithIntermediates(
                 roundTripData.path,
                 startNode,
                 [startNode],
