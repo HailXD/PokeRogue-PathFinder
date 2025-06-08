@@ -30,6 +30,7 @@ export function initializeGraph() {
                 arrows: "to",
                 color: { color: edgeColor, highlight: highlightColor },
                 font: { align: "top", size: 16, color: fontColor },
+                pathWeight: conn.weight,
             });
         });
     });
@@ -130,32 +131,47 @@ export function resetGraphStyles() {
         width: 2.5,
         dashes: false,
     };
+    const weightedPathEdgeStyle = {
+        color: "orange",
+        width: 2.5,
+        dashes: false,
+    };
     const loopEdgeStyle = {
         color: "red",
         dashes: [5, 5],
         width: 2.5,
     };
+    const weightedLoopEdgeStyle = {
+        color: "orange",
+        dashes: [5, 5],
+        width: 2.5,
+    };
 
     const edgeUpdates = edges.getIds().map((edgeId) => {
+        const edge = edges.get(edgeId);
         const update = {
             id: edgeId,
             font: { color: fontColor },
         };
 
+        const hasWeight = edge.pathWeight > 1;
+
         if (persistentLoopEdgeIds.has(edgeId)) {
+            const style = hasWeight ? weightedLoopEdgeStyle : loopEdgeStyle;
             update.color = {
-                color: loopEdgeStyle.color,
+                color: style.color,
                 highlight: highlightColor,
             };
-            update.width = loopEdgeStyle.width;
-            update.dashes = loopEdgeStyle.dashes;
+            update.width = style.width;
+            update.dashes = style.dashes;
         } else if (persistentPathEdgeIds.has(edgeId)) {
+            const style = hasWeight ? weightedPathEdgeStyle : pathEdgeStyle;
             update.color = {
-                color: pathEdgeStyle.color,
+                color: style.color,
                 highlight: highlightColor,
             };
-            update.width = pathEdgeStyle.width;
-            update.dashes = pathEdgeStyle.dashes;
+            update.width = style.width;
+            update.dashes = style.dashes;
         } else {
             update.color = { color: edgeColor, highlight: highlightColor };
             update.width = 1;

@@ -361,22 +361,37 @@ function formatPathWithIntermediates(
 ) {
     if (!pathArray || pathArray.length === 0) return "";
 
-    return pathArray
-        .map((node, index) => {
-            const nodeText = node.replace(/_/g, " ");
-            const isJourneyStart =
-                node === journeyStartNode && index === 0 && !isLoopPath;
-            const isSegmentTarget = targetNodesInSegment.includes(node);
+    let html = "";
+    for (let i = 0; i < pathArray.length; i++) {
+        const node = pathArray[i];
+        const nodeText = node.replace(/_/g, " ");
+        const isJourneyStart =
+            node === journeyStartNode && i === 0 && !isLoopPath;
+        const isSegmentTarget = targetNodesInSegment.includes(node);
 
-            if (isJourneyStart) {
-                return `<span class="highlight-start">${nodeText}</span>`;
-            } else if (isSegmentTarget) {
-                return `<span class="highlight-target">${nodeText}</span>`;
+        let nodeClass = "highlight-intermediate";
+        if (isJourneyStart) {
+            nodeClass = "highlight-start";
+        } else if (isSegmentTarget) {
+            nodeClass = "highlight-target";
+        }
+
+        html += `<span class="${nodeClass}">${nodeText}</span>`;
+
+        if (i < pathArray.length - 1) {
+            const nextNode = pathArray[i + 1];
+            const connections = graph.get(node) || [];
+            const edge = connections.find((conn) => conn.to === nextNode);
+            const weight = edge ? edge.weight : 1;
+
+            if (weight > 1) {
+                html += ` <span style="color: orange; font-weight: bold;">→</span> `;
             } else {
-                return `<span class="highlight-intermediate">${nodeText}</span>`;
+                html += " → ";
             }
-        })
-        .join(" → ");
+        }
+    }
+    return html;
 }
 
 function findNearestNeighborPath(startNode, targetNodes, pathCache) {
