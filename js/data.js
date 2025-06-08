@@ -116,38 +116,140 @@ for (const sourceBiome in biomeLinksRaw) {
 export const biomeNamesSorted = Array.from(allBiomes).sort();
 
 export const biomePositions = {
-    [BiomeId.TOWN]: { x: 0, y: 0 },
-    [BiomeId.PLAINS]: { x: 150, y: 0 },
-    [BiomeId.METROPOLIS]: { x: 300, y: -75 },
-    [BiomeId.SLUM]: { x: 450, y: -75 },
-    [BiomeId.CONSTRUCTION_SITE]: { x: 600, y: -75 },
-    [BiomeId.POWER_PLANT]: { x: 750, y: -150 },
-    [BiomeId.FACTORY]: { x: 900, y: -150 },
-    [BiomeId.LABORATORY]: { x: 750, y: 0 },
-    [BiomeId.DOJO]: { x: 600, y: 75 },
-    [BiomeId.GRASS]: { x: 300, y: 75 },
-    [BiomeId.TALL_GRASS]: { x: 450, y: 75 },
-    [BiomeId.FOREST]: { x: 600, y: 150 },
-    [BiomeId.JUNGLE]: { x: 750, y: 225 },
-    [BiomeId.TEMPLE]: { x: 900, y: 225 },
-    [BiomeId.MEADOW]: { x: 450, y: 150 },
-    [BiomeId.FAIRY_CAVE]: { x: 300, y: 225 },
-    [BiomeId.LAKE]: { x: 150, y: 150 },
-    [BiomeId.SWAMP]: { x: 300, y: 150 },
-    [BiomeId.GRAVEYARD]: { x: 450, y: 225 },
-    [BiomeId.ABYSS]: { x: 600, y: 300 },
-    [BiomeId.BEACH]: { x: 0, y: 225 },
-    [BiomeId.SEA]: { x: -150, y: 225 },
-    [BiomeId.ISLAND]: { x: -300, y: 225 },
-    [BiomeId.SEABED]: { x: -150, y: 300 },
-    [BiomeId.VOLCANO]: { x: -300, y: 375 },
-    [BiomeId.ICE_CAVE]: { x: 0, y: 375 },
-    [BiomeId.SNOWY_FOREST]: { x: 150, y: 375 },
-    [BiomeId.CAVE]: { x: -150, y: 75 },
-    [BiomeId.BADLANDS]: { x: -300, y: 75 },
-    [BiomeId.DESERT]: { x: -450, y: 75 },
-    [BiomeId.RUINS]: { x: -600, y: 75 },
-    [BiomeId.MOUNTAIN]: { x: -300, y: 0 },
-    [BiomeId.WASTELAND]: { x: -450, y: -75 },
-    [BiomeId.SPACE]: { x: -450, y: 0 },
-};
+    "ABYSS": {
+        "x": 376,
+        "y": -305
+    },
+    "BADLANDS": {
+        "x": 347,
+        "y": -478
+    },
+    "BEACH": {
+        "x": 411,
+        "y": 102
+    },
+    "CAVE": {
+        "x": 154,
+        "y": -290
+    },
+    "CONSTRUCTION_SITE": {
+        "x": -211,
+        "y": -208
+    },
+    "DESERT": {
+        "x": 30,
+        "y": -364
+    },
+    "DOJO": {
+        "x": -470,
+        "y": 1
+    },
+    "FACTORY": {
+        "x": -323,
+        "y": -296
+    },
+    "FAIRY_CAVE": {
+        "x": 189,
+        "y": 382
+    },
+    "FOREST": {
+        "x": -10,
+        "y": 149
+    },
+    "GRASS": {
+        "x": -384,
+        "y": -151
+    },
+    "GRAVEYARD": {
+        "x": 147,
+        "y": -548
+    },
+    "ICE_CAVE": {
+        "x": 491,
+        "y": 362
+    },
+    "ISLAND": {
+        "x": 696,
+        "y": -87
+    },
+    "JUNGLE": {
+        "x": -289,
+        "y": 234
+    },
+    "LABORATORY": {
+        "x": -120,
+        "y": -520
+    },
+    "LAKE": {
+        "x": 44,
+        "y": -20
+    },
+    "MEADOW": {
+        "x": -123,
+        "y": 382
+    },
+    "METROPOLIS": {
+        "x": -595,
+        "y": -115
+    },
+    "MOUNTAIN": {
+        "x": 448,
+        "y": -170
+    },
+    "PLAINS": {
+        "x": -276,
+        "y": 73
+    },
+    "POWER_PLANT": {
+        "x": -587,
+        "y": -318
+    },
+    "RUINS": {
+        "x": 138,
+        "y": -126
+    },
+    "SEA": {
+        "x": 673,
+        "y": 190
+    },
+    "SEABED": {
+        "x": 424,
+        "y": -44
+    },
+    "SLUM": {
+        "x": -436,
+        "y": -403
+    },
+    "SNOWY_FOREST": {
+        "x": 262,
+        "y": 201
+    },
+    "SPACE": {
+        "x": 276,
+        "y": 48
+    },
+    "SWAMP": {
+        "x": -122,
+        "y": -355
+    },
+    "TALL_GRASS": {
+        "x": -55,
+        "y": -140
+    },
+    "TEMPLE": {
+        "x": -165,
+        "y": -57
+    },
+    "TOWN": {
+        "x": -516,
+        "y": 286
+    },
+    "VOLCANO": {
+        "x": 657,
+        "y": 62
+    },
+    "WASTELAND": {
+        "x": 627,
+        "y": -423
+    }
+}
