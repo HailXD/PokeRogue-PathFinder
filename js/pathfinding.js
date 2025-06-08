@@ -121,7 +121,7 @@ function dijkstra(
             const v = edge.to;
             if (avoidNodes.has(v) && v !== endNode) continue;
 
-            const weight = useUnitWeight ? 1 : 1 + (edge.weight - 1) * 3;
+            const weight = useUnitWeight ? 1 : 1 + (edge.weight - 1) * 5;
             const alt = distances.get(u) + weight;
 
             if (alt < distances.get(v)) {
@@ -429,7 +429,8 @@ async function findPathOptimal(
     avoidNodesSet,
     statusDiv,
     initialStatusHTML,
-    styleOptions
+    styleOptions,
+    pathfindingMode
 ) {
     let statusHTML = initialStatusHTML;
     statusHTML += `Starting from: <span class="highlight-start">${startNode.replace(
@@ -655,9 +656,17 @@ async function findPathOptimal(
     statusHTML += "<br><br>";
 
     if (!bestPermutationDetails) {
-        statusHTML += `No complete path visiting all targets and looping back could be found.`;
+        statusHTML += `No complete path visiting all targets could be found.`;
     } else {
-        bestPermutationDetails.segments.forEach((seg) => {
+        const pathDetailsToUse =
+            pathfindingMode === "shortest" && bestShortestPathPermutationDetails
+                ? bestShortestPathPermutationDetails
+                : bestPermutationDetails;
+
+        const isShortestPath =
+            pathDetailsToUse === bestShortestPathPermutationDetails;
+
+        pathDetailsToUse.segments.forEach((seg) => {
             seg.forEach((node) => {
                 persistentPathNodeIds.add(node);
                 visitedNodes.add(node);
@@ -667,27 +676,21 @@ async function findPathOptimal(
             );
         });
         if (
-            bestPermutationDetails.loopSegment &&
-            bestPermutationDetails.loopSegment.path
+            pathDetailsToUse.loopSegment &&
+            pathDetailsToUse.loopSegment.path
         ) {
-            bestPermutationDetails.loopSegment.path.forEach((node) => {
+            pathDetailsToUse.loopSegment.path.forEach((node) => {
                 persistentPathNodeIds.add(node);
                 visitedNodes.add(node);
             });
-            getEdgeIdsForPath(bestPermutationDetails.loopSegment.path).forEach(
+            getEdgeIdsForPath(pathDetailsToUse.loopSegment.path).forEach(
                 (id) => persistentLoopEdgeIds.add(id)
             );
         }
 
-        const pathCostWithoutLoop =
-            bestPermutationDetails.totalCost -
-            (bestPermutationDetails.loopSegment
-                ? bestPermutationDetails.loopSegment.cost
-                : 0);
-
-        let fullOptimalPathDisplay = "";
+        let fullPathDisplay = "";
         let lastNodeOfPreviousSegment = null;
-        bestPermutationDetails.segments.forEach((segmentPath, index) => {
+        pathDetailsToUse.segments.forEach((segmentPath, index) => {
             let displaySegment = segmentPath;
             if (
                 index > 0 &&
@@ -697,168 +700,55 @@ async function findPathOptimal(
                 displaySegment = segmentPath.slice(1);
             }
             if (displaySegment.length > 0) {
-                if (fullOptimalPathDisplay !== "")
-                    fullOptimalPathDisplay += " → ";
-                fullOptimalPathDisplay += formatPathWithIntermediates(
+                if (fullPathDisplay !== "") fullPathDisplay += " → ";
+                fullPathDisplay += formatPathWithIntermediates(
                     displaySegment,
                     startNode,
-                    bestPermutationDetails.permutation
+                    pathDetailsToUse.permutation
                 );
             }
             if (segmentPath.length > 0)
-                lastNodeOfPreviousSegment = segmentPath[segmentPath.length - 1];
+                lastNodeOfPreviousSegment =
+                    segmentPath[segmentPath.length - 1];
         });
 
-        const optimalPathStepCount = bestPermutationDetails.segments.reduce(
+        const pathStepCount = pathDetailsToUse.segments.reduce(
             (acc, seg) => acc + seg.length - 1,
             0
         );
-        statusHTML += `<b>Optimal Path (${optimalPathStepCount} Steps):<br></b>${fullOptimalPathDisplay}<br>`;
-        statusHTML += `<br>`;
+        const pathTitle = isShortestPath ? "Shortest Path" : "Optimal Path";
+        statusHTML += `<b>${pathTitle} (${pathStepCount} Steps):<br></b>${fullPathDisplay}<br><br>`;
 
         let loopPathDisplay = "N/A";
-        let loopCostDisplay = "0";
         if (
-            bestPermutationDetails.loopSegment &&
-            bestPermutationDetails.loopSegment.path.length > 0 &&
-            bestPermutationDetails.loopSegment.cost !== Infinity
+            pathDetailsToUse.loopSegment &&
+            pathDetailsToUse.loopSegment.path.length > 0 &&
+            pathDetailsToUse.loopSegment.cost !== Infinity
         ) {
-            loopCostDisplay = String(bestPermutationDetails.loopSegment.cost);
             const loopTargetsContext = [
-                bestPermutationDetails.permutation[0],
-                bestPermutationDetails.permutation[
-                    bestPermutationDetails.permutation.length - 1
+                pathDetailsToUse.permutation[0],
+                pathDetailsToUse.permutation[
+                    pathDetailsToUse.permutation.length - 1
                 ],
             ];
-
             loopPathDisplay = formatPathWithIntermediates(
-                bestPermutationDetails.loopSegment.path,
+                pathDetailsToUse.loopSegment.path,
                 startNode,
                 loopTargetsContext,
                 true
             );
         }
 
-        const loopPathStepCount = bestPermutationDetails.loopSegment
-            ? bestPermutationDetails.loopSegment.path.length - 1
+        const loopPathStepCount = pathDetailsToUse.loopSegment
+            ? pathDetailsToUse.loopSegment.path.length - 1
             : 0;
-        statusHTML += `<b>Optimal Loop Path (${loopPathStepCount} Steps):<br></b>${loopPathDisplay}<br>`;
-        statusHTML += `<br>`;
-
-        if (bestShortestPathPermutationDetails) {
-            const fullOptimalPathString = JSON.stringify([
-                ...bestPermutationDetails.segments,
-                ...(bestPermutationDetails.loopSegment?.path
-                    ? [bestPermutationDetails.loopSegment.path]
-                    : []),
-            ]);
-            const fullShortestPathString = JSON.stringify([
-                ...bestShortestPathPermutationDetails.segments,
-                ...(bestShortestPathPermutationDetails.loopSegment?.path
-                    ? [bestShortestPathPermutationDetails.loopSegment.path]
-                    : []),
-            ]);
-
-            const optimalTotalSteps =
-                optimalPathStepCount +
-                (bestPermutationDetails.loopSegment
-                    ? bestPermutationDetails.loopSegment.path.length - 1
-                    : 0);
-            const shortestTotalSteps =
-                bestShortestPathPermutationDetails.segments.reduce(
-                    (acc, seg) => acc + seg.length - 1,
-                    0
-                ) +
-                (bestShortestPathPermutationDetails.loopSegment
-                    ? bestShortestPathPermutationDetails.loopSegment.path.length - 1
-                    : 0);
-
-            if (
-                fullOptimalPathString !== fullShortestPathString &&
-                shortestTotalSteps < optimalTotalSteps
-            ) {
-                const shortestPathCostWithoutLoop =
-                    bestShortestPathPermutationDetails.totalCost -
-                    (bestShortestPathPermutationDetails.loopSegment
-                        ? bestShortestPathPermutationDetails.loopSegment.cost
-                        : 0);
-
-                let fullShortestPathDisplay = "";
-                let lastNodeOfPreviousShortestSegment = null;
-                bestShortestPathPermutationDetails.segments.forEach(
-                    (segmentPath, index) => {
-                        let displaySegment = segmentPath;
-                        if (
-                            index > 0 &&
-                            segmentPath.length > 0 &&
-                            segmentPath[0] === lastNodeOfPreviousShortestSegment
-                        ) {
-                            displaySegment = segmentPath.slice(1);
-                        }
-                        if (displaySegment.length > 0) {
-                            if (fullShortestPathDisplay !== "")
-                                fullShortestPathDisplay += " → ";
-                            fullShortestPathDisplay +=
-                                formatPathWithIntermediates(
-                                    displaySegment,
-                                    startNode,
-                                    bestShortestPathPermutationDetails.permutation
-                                );
-                        }
-                        if (segmentPath.length > 0)
-                            lastNodeOfPreviousShortestSegment =
-                                segmentPath[segmentPath.length - 1];
-                    }
-                );
-
-                const shortestPathStepCount =
-                    bestShortestPathPermutationDetails.segments.reduce(
-                        (acc, seg) => acc + seg.length - 1,
-                        0
-                    );
-                statusHTML += `<b>Shortest Path (${shortestPathStepCount} Steps):<br></b>${fullShortestPathDisplay}<br>`;
-                statusHTML += `<br>`;
-
-                let shortestLoopPathDisplay = "N/A";
-                let shortestLoopCostDisplay = "0";
-                if (
-                    bestShortestPathPermutationDetails.loopSegment &&
-                    bestShortestPathPermutationDetails.loopSegment.path.length >
-                        0 &&
-                    bestShortestPathPermutationDetails.loopSegment.cost !==
-                        Infinity
-                ) {
-                    shortestLoopCostDisplay = String(
-                        bestShortestPathPermutationDetails.loopSegment.cost
-                    );
-                    const loopTargetsContext = [
-                        bestShortestPathPermutationDetails.permutation[0],
-                        bestShortestPathPermutationDetails.permutation[
-                            bestShortestPathPermutationDetails.permutation
-                                .length - 1
-                        ],
-                    ];
-
-                    shortestLoopPathDisplay = formatPathWithIntermediates(
-                        bestShortestPathPermutationDetails.loopSegment.path,
-                        startNode,
-                        loopTargetsContext,
-                        true
-                    );
-                }
-
-                const shortestLoopPathStepCount =
-                    bestShortestPathPermutationDetails.loopSegment
-                        ? bestShortestPathPermutationDetails.loopSegment.path
-                              .length - 1
-                        : 0;
-                statusHTML += `<b>Shortest Loop Path (${shortestLoopPathStepCount} Steps):<br></b>${shortestLoopPathDisplay}<br>`;
-                statusHTML += `<br>`;
-            }
-        }
+        const loopTitle = isShortestPath
+            ? "Shortest Loop Path"
+            : "Optimal Loop Path";
+        statusHTML += `<b>${loopTitle} (${loopPathStepCount} Steps):<br></b>${loopPathDisplay}<br><br>`;
 
         await animatePath(
-            bestPermutationDetails.segments,
+            pathDetailsToUse.segments,
             NODE_STYLES.PATH_ANIMATION,
             {
                 startNode: startNode,
@@ -866,29 +756,23 @@ async function findPathOptimal(
                 pokemonSpawnNodes: styleOptions.pokemonSpawnNodes,
             }
         );
+
         if (
-            bestPermutationDetails.loopSegment &&
-            bestPermutationDetails.loopSegment.path.length > 0 &&
-            bestPermutationDetails.loopSegment.cost !== Infinity
+            pathDetailsToUse.loopSegment &&
+            pathDetailsToUse.loopSegment.path.length > 0 &&
+            pathDetailsToUse.loopSegment.cost !== Infinity
         ) {
-            if (
-                !(
-                    bestPermutationDetails.loopSegment.path.length === 1 &&
-                    bestPermutationDetails.loopSegment.cost === 0
-                )
-            ) {
-                await animatePath(
-                    [bestPermutationDetails.loopSegment.path],
-                    NODE_STYLES.LOOP_ANIMATION,
-                    {
-                        isLoop: true,
-                        baseDelay: 50,
-                        startNode: startNode,
-                        targetNodes: styleOptions.allTargetNodes,
-                        pokemonSpawnNodes: styleOptions.pokemonSpawnNodes,
-                    }
-                );
-            }
+            await animatePath(
+                [pathDetailsToUse.loopSegment.path],
+                NODE_STYLES.LOOP_ANIMATION,
+                {
+                    isLoop: true,
+                    baseDelay: 50,
+                    startNode: startNode,
+                    targetNodes: styleOptions.allTargetNodes,
+                    pokemonSpawnNodes: styleOptions.pokemonSpawnNodes,
+                }
+            );
         }
     }
     statusDiv.innerHTML = statusHTML + INSTRUCTIONAL_TEXT;
@@ -900,7 +784,8 @@ export async function findPath(
     targetNodesInput,
     avoidNodesSet,
     pokemonSpawnNodes,
-    allTargetNodes
+    allTargetNodes,
+    pathfindingMode = "optimal"
 ) {
     const statusDiv = document.getElementById("status");
     statusDiv.innerHTML = "Processing...";
@@ -1023,7 +908,8 @@ export async function findPath(
         avoidNodesSet,
         statusDiv,
         statusHTML,
-        styleOptions
+        styleOptions,
+        pathfindingMode
     );
     updateAllNodeStyles();
 }

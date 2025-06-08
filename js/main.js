@@ -26,6 +26,7 @@ export let biomePokemonSpawns = new Map();
 export const networkHolder = { network: null };
 export let nodes = new vis.DataSet();
 export const edges = new vis.DataSet();
+export let pathfindingMode = "optimal";
 
 export const NODE_STYLES = {
     DEFAULT: {
@@ -241,6 +242,7 @@ function initializeEventListeners() {
         "includePokemonInTarget"
     );
     const resetButton = document.getElementById("resetButton");
+    const pathToggleButton = document.getElementById("path-toggle");
 
     biomeNamesSorted.forEach((biome) => {
         const option = new Option(biome.replace(/_/g, " "), biome);
@@ -315,6 +317,15 @@ function initializeEventListeners() {
         }
     );
 
+    pathToggleButton.addEventListener("click", () => {
+        pathfindingMode = pathfindingMode === "optimal" ? "shortest" : "optimal";
+        pathToggleButton.textContent =
+            pathfindingMode === "optimal"
+                ? "Show Shortest Path"
+                : "Show Optimal Path";
+        runPathfinding(true);
+    });
+
     themeToggleBtn.addEventListener("click", () => {
         toggleTheme();
         resetGraphStyles();
@@ -371,7 +382,8 @@ export async function runPathfinding(forceRecalculate = false) {
         targetNodesInput,
         avoidNodesSet,
         pokemonBiomes,
-        selectedTargetBiomes
+        selectedTargetBiomes,
+        pathfindingMode
     );
 }
 
