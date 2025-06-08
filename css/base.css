@@ -38,12 +38,17 @@ body {
     #graph-container {
         display: none;
     }
-
+    
+    #path-toggle {
+        display: none;
+    }
+    
     .status::after {
         content: "Graph Related on PC Only";
         font-size: 0.8em;
         color: #ff0000;
     }
+
 }
 
 .graph-panel {
