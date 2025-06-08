@@ -16,6 +16,8 @@ const INSTRUCTIONAL_TEXT = `
     Select <span class="highlight-key">biomes</span> to find the optimal path.<br />
     <span class="highlight-key">Click</span> on a biome to see
     list full list of spawn.<br />
+    <span class="highlight-key">Right-click</span> a biome to set
+    it as the start biome.<br />
     <span class="highlight-key">Search</span> for Pokemon to
     highlight their biomes.<br />
     <span class="highlight-key">Hover</span> on highlighted to
@@ -83,7 +85,12 @@ class PriorityQueue {
     }
 }
 
-function dijkstra(startNode, endNode, avoidNodes = new Set()) {
+function dijkstra(
+    startNode,
+    endNode,
+    avoidNodes = new Set(),
+    useUnitWeight = false
+) {
     const distances = new Map();
     const prevNodes = new Map();
     const pq = new PriorityQueue();
@@ -114,7 +121,9 @@ function dijkstra(startNode, endNode, avoidNodes = new Set()) {
             const v = edge.to;
             if (avoidNodes.has(v) && v !== endNode) continue;
 
-            const alt = distances.get(u) + edge.weight;
+            const weight = useUnitWeight ? 1 : edge.weight;
+            const alt = distances.get(u) + weight;
+
             if (alt < distances.get(v)) {
                 distances.set(v, alt);
                 prevNodes.set(v, u);
@@ -267,7 +276,11 @@ function getEdgeIdsForPath(path) {
     return Array.from(ids);
 }
 
-function findShortestRoundTripFromNode(node, avoidNodesSet) {
+function findShortestRoundTripFromNode(
+    node,
+    avoidNodesSet,
+    useUnitWeight = false
+) {
     let minLoopCost = Infinity;
     let bestLoopPath = [];
 
@@ -280,7 +293,12 @@ function findShortestRoundTripFromNode(node, avoidNodesSet) {
     }
 
     for (const intermediate of potentialIntermediates) {
-        const pathToIntermediate = dijkstra(node, intermediate, avoidNodesSet);
+        const pathToIntermediate = dijkstra(
+            node,
+            intermediate,
+            avoidNodesSet,
+            useUnitWeight
+        );
         if (
             pathToIntermediate.cost === Infinity ||
             !pathToIntermediate.path ||
@@ -292,7 +310,8 @@ function findShortestRoundTripFromNode(node, avoidNodesSet) {
         const pathFromIntermediate = dijkstra(
             intermediate,
             node,
-            avoidNodesSet
+            avoidNodesSet,
+            useUnitWeight
         );
         if (
             pathFromIntermediate.cost === Infinity ||
@@ -424,6 +443,7 @@ async function findPathOptimal(
     await new Promise((resolve) => setTimeout(resolve, 10));
 
     const pathCache = new Map();
+    const shortestPathCache = new Map();
     const nodesForPathCalc = [startNode, ...effectiveTargetNodes];
 
     statusHTML += "Finding optimal path...<br>";
@@ -434,11 +454,19 @@ async function findPathOptimal(
         for (const nodeB of nodesForPathCalc) {
             if (nodeA === nodeB) {
                 pathCache.set(`${nodeA}->${nodeB}`, { path: [nodeA], cost: 0 });
+                shortestPathCache.set(`${nodeA}->${nodeB}`, {
+                    path: [nodeA],
+                    cost: 0,
+                });
                 continue;
             }
             const cacheKey = `${nodeA}->${nodeB}`;
             if (!pathCache.has(cacheKey)) {
                 pathCache.set(cacheKey, dijkstra(nodeA, nodeB, avoidNodesSet));
+                shortestPathCache.set(
+                    cacheKey,
+                    dijkstra(nodeA, nodeB, avoidNodesSet, true)
+                );
             }
         }
     }
@@ -460,6 +488,8 @@ async function findPathOptimal(
 
     let minTotalCost = Infinity;
     let bestPermutationDetails = null;
+    let minShortestPathCost = Infinity;
+    let bestShortestPathPermutationDetails = null;
 
     for (const perm of permutations) {
         let currentTotalCost = 0;
@@ -467,8 +497,14 @@ async function findPathOptimal(
         let currentLoopSegmentData = null;
         let permutationPossible = true;
 
+        let currentShortestPathCost = 0;
+        const currentShortestPathSegmentsArrays = [];
+        let currentShortestPathLoopSegmentData = null;
+
         const firstSegmentKey = `${startNode}->${perm[0]}`;
         const firstSegmentData = pathCache.get(firstSegmentKey);
+        const firstShortestPathSegmentData =
+            shortestPathCache.get(firstSegmentKey);
 
         if (!firstSegmentData || firstSegmentData.cost === Infinity) {
             permutationPossible = false;
@@ -476,6 +512,12 @@ async function findPathOptimal(
             currentTotalCost += firstSegmentData.cost;
             if (firstSegmentData.path.length > 0)
                 currentPathSegmentsArrays.push(firstSegmentData.path);
+
+            currentShortestPathCost += firstShortestPathSegmentData.cost;
+            if (firstShortestPathSegmentData.path.length > 0)
+                currentShortestPathSegmentsArrays.push(
+                    firstShortestPathSegmentData.path
+                );
         }
 
         if (permutationPossible) {
@@ -484,6 +526,8 @@ async function findPathOptimal(
                 const dest = perm[i + 1];
                 const segmentKey = `${source}->${dest}`;
                 const segmentData = pathCache.get(segmentKey);
+                const shortestPathSegmentData =
+                    shortestPathCache.get(segmentKey);
 
                 if (!segmentData || segmentData.cost === Infinity) {
                     permutationPossible = false;
@@ -492,6 +536,12 @@ async function findPathOptimal(
                 currentTotalCost += segmentData.cost;
                 if (segmentData.path.length > 0)
                     currentPathSegmentsArrays.push(segmentData.path);
+
+                currentShortestPathCost += shortestPathSegmentData.cost;
+                if (shortestPathSegmentData.path.length > 0)
+                    currentShortestPathSegmentsArrays.push(
+                        shortestPathSegmentData.path
+                    );
             }
         }
 
@@ -504,6 +554,12 @@ async function findPathOptimal(
                     loopStartTarget,
                     avoidNodesSet
                 );
+                const shortestRoundTripData = findShortestRoundTripFromNode(
+                    loopStartTarget,
+                    avoidNodesSet,
+                    true
+                );
+
                 if (
                     roundTripData.cost === Infinity ||
                     roundTripData.path.length === 0
@@ -512,10 +568,14 @@ async function findPathOptimal(
                 } else {
                     currentTotalCost += roundTripData.cost;
                     currentLoopSegmentData = roundTripData;
+                    currentShortestPathCost += shortestRoundTripData.cost;
+                    currentShortestPathLoopSegmentData = shortestRoundTripData;
                 }
             } else {
                 const loopKey = `${loopStartTarget}->${loopEndTarget}`;
                 const loopData = pathCache.get(loopKey);
+                const shortestLoopData = shortestPathCache.get(loopKey);
+
                 if (
                     !loopData ||
                     loopData.cost === Infinity ||
@@ -525,6 +585,8 @@ async function findPathOptimal(
                 } else {
                     currentTotalCost += loopData.cost;
                     currentLoopSegmentData = loopData;
+                    currentShortestPathCost += shortestLoopData.cost;
+                    currentShortestPathLoopSegmentData = shortestLoopData;
                 }
             }
         }
@@ -536,6 +598,19 @@ async function findPathOptimal(
                 segments: currentPathSegmentsArrays,
                 loopSegment: currentLoopSegmentData,
                 totalCost: minTotalCost,
+            };
+        }
+
+        if (
+            permutationPossible &&
+            currentShortestPathCost < minShortestPathCost
+        ) {
+            minShortestPathCost = currentShortestPathCost;
+            bestShortestPathPermutationDetails = {
+                permutation: perm,
+                segments: currentShortestPathSegmentsArrays,
+                loopSegment: currentShortestPathLoopSegmentData,
+                totalCost: minShortestPathCost,
             };
         }
     }
@@ -619,7 +694,7 @@ async function findPathOptimal(
                 lastNodeOfPreviousSegment = segmentPath[segmentPath.length - 1];
         });
 
-        statusHTML += `<b>Optimal Path:<br></b>${fullOptimalPathDisplay}<br>`;
+        statusHTML += `<b>Optimal Path (Highest Probability):<br></b>${fullOptimalPathDisplay}<br>`;
         statusHTML += `<b>Cost:</b> ${pathCostWithoutLoop}<br><br>`;
 
         let loopPathDisplay = "N/A";
@@ -645,9 +720,89 @@ async function findPathOptimal(
             );
         }
 
-        statusHTML += `<b>Optimal Loop Path:<br></b>${loopPathDisplay}<br>`;
+        statusHTML += `<b>Optimal Loop Path (Highest Probability):<br></b>${loopPathDisplay}<br>`;
         statusHTML += `<b>Loop Cost:</b> ${loopCostDisplay}<br><br>`;
-        statusHTML += `<b>Total Optimal Cost:</b> ${bestPermutationDetails.totalCost}<br>`;
+        statusHTML += `<b>Total Optimal Cost:</b> ${bestPermutationDetails.totalCost}<br><br>`;
+
+        if (bestShortestPathPermutationDetails) {
+            const fullOptimalPathString = JSON.stringify(
+                bestPermutationDetails.segments
+            );
+            const fullShortestPathString = JSON.stringify(
+                bestShortestPathPermutationDetails.segments
+            );
+
+            if (fullOptimalPathString !== fullShortestPathString) {
+                const shortestPathCostWithoutLoop =
+                    bestShortestPathPermutationDetails.totalCost -
+                    (bestShortestPathPermutationDetails.loopSegment
+                        ? bestShortestPathPermutationDetails.loopSegment.cost
+                        : 0);
+
+                let fullShortestPathDisplay = "";
+                let lastNodeOfPreviousShortestSegment = null;
+                bestShortestPathPermutationDetails.segments.forEach(
+                    (segmentPath, index) => {
+                        let displaySegment = segmentPath;
+                        if (
+                            index > 0 &&
+                            segmentPath.length > 0 &&
+                            segmentPath[0] === lastNodeOfPreviousShortestSegment
+                        ) {
+                            displaySegment = segmentPath.slice(1);
+                        }
+                        if (displaySegment.length > 0) {
+                            if (fullShortestPathDisplay !== "")
+                                fullShortestPathDisplay += " → ";
+                            fullShortestPathDisplay +=
+                                formatPathWithIntermediates(
+                                    displaySegment,
+                                    startNode,
+                                    bestShortestPathPermutationDetails.permutation
+                                );
+                        }
+                        if (segmentPath.length > 0)
+                            lastNodeOfPreviousShortestSegment =
+                                segmentPath[segmentPath.length - 1];
+                    }
+                );
+
+                statusHTML += `<b>Shortest Path:<br></b>${fullShortestPathDisplay}<br>`;
+                statusHTML += `<b>Cost:</b> ${shortestPathCostWithoutLoop}<br><br>`;
+
+                let shortestLoopPathDisplay = "N/A";
+                let shortestLoopCostDisplay = "0";
+                if (
+                    bestShortestPathPermutationDetails.loopSegment &&
+                    bestShortestPathPermutationDetails.loopSegment.path.length >
+                        0 &&
+                    bestShortestPathPermutationDetails.loopSegment.cost !==
+                        Infinity
+                ) {
+                    shortestLoopCostDisplay = String(
+                        bestShortestPathPermutationDetails.loopSegment.cost
+                    );
+                    const loopTargetsContext = [
+                        bestShortestPathPermutationDetails.permutation[0],
+                        bestShortestPathPermutationDetails.permutation[
+                            bestShortestPathPermutationDetails.permutation
+                                .length - 1
+                        ],
+                    ];
+
+                    shortestLoopPathDisplay = formatPathWithIntermediates(
+                        bestShortestPathPermutationDetails.loopSegment.path,
+                        startNode,
+                        loopTargetsContext,
+                        true
+                    );
+                }
+
+                statusHTML += `<b>Shortest Loop Path:<br></b>${shortestLoopPathDisplay}<br>`;
+                statusHTML += `<b>Loop Cost:</b> ${shortestLoopCostDisplay}<br><br>`;
+                statusHTML += `<b>Total Shortest Cost:</b> ${bestShortestPathPermutationDetails.totalCost}<br>`;
+            }
+        }
 
         await animatePath(
             bestPermutationDetails.segments,
@@ -749,7 +904,8 @@ export async function findPath(
 
         const roundTripData = findShortestRoundTripFromNode(
             startNode,
-            avoidNodesSet
+            avoidNodesSet,
+            false
         );
 
         if (roundTripData.cost !== Infinity && roundTripData.path.length > 0) {
