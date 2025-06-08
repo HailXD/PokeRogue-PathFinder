@@ -1,4 +1,4 @@
-import { biomeNamesSorted, allBiomes } from "./data.js";
+import { biomeNamesSorted, allBiomes, BiomeId } from "./data.js";
 import {
     selectedTargetBiomes,
     selectedAvoidBiomes,
@@ -43,6 +43,12 @@ export function createMultiSelectItems(
     container.innerHTML = "";
 
     biomeNamesSorted.forEach((biome) => {
+        if (
+            (isTarget || containerId === "avoidBiomesContainer") &&
+            biome === BiomeId.TOWN
+        ) {
+            return;
+        }
         const item = document.createElement("div");
         const itemText = biome.replace(/_/g, " ");
         item.classList.add("multi-select-item");

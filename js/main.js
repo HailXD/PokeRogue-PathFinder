@@ -180,6 +180,9 @@ function updateTargetBiomesFromPokemon() {
 
     if (includePokemonInTarget.checked) {
         pokemonBiomes.forEach((biome) => {
+            if (biome === BiomeId.TOWN) {
+                return;
+            }
             selectedTargetBiomes.add(biome);
             const item = document.querySelector(
                 `#targetBiomesContainer .multi-select-item[data-value="${biome}"]`
