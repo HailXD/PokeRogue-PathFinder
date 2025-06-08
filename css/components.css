@@ -323,7 +323,7 @@ body.dark-theme #resetButton:hover {
 .graph-toggle-container {
     position: absolute;;
     bottom: 75%;
-    right: 20px;
+    right: 60%;
     z-index: 10;
 }
 

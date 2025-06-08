@@ -658,15 +658,16 @@ async function findPathOptimal(
     if (!bestPermutationDetails) {
         statusHTML += `No complete path visiting all targets could be found.`;
     } else {
-        const pathDetailsToUse =
-            pathfindingMode === "shortest" && bestShortestPathPermutationDetails
-                ? bestShortestPathPermutationDetails
-                : bestPermutationDetails;
+        const optimalPathDetails = bestPermutationDetails;
+        const shortestPathDetails = bestShortestPathPermutationDetails;
 
-        const isShortestPath =
-            pathDetailsToUse === bestShortestPathPermutationDetails;
+        const pathDetailsToAnimate =
+            pathfindingMode === "shortest" && shortestPathDetails
+                ? shortestPathDetails
+                : optimalPathDetails;
 
-        pathDetailsToUse.segments.forEach((seg) => {
+        // Always add nodes from the animated path to persistent sets for styling
+        pathDetailsToAnimate.segments.forEach((seg) => {
             seg.forEach((node) => {
                 persistentPathNodeIds.add(node);
                 visitedNodes.add(node);
@@ -676,79 +677,110 @@ async function findPathOptimal(
             );
         });
         if (
-            pathDetailsToUse.loopSegment &&
-            pathDetailsToUse.loopSegment.path
+            pathDetailsToAnimate.loopSegment &&
+            pathDetailsToAnimate.loopSegment.path
         ) {
-            pathDetailsToUse.loopSegment.path.forEach((node) => {
+            pathDetailsToAnimate.loopSegment.path.forEach((node) => {
                 persistentPathNodeIds.add(node);
                 visitedNodes.add(node);
             });
-            getEdgeIdsForPath(pathDetailsToUse.loopSegment.path).forEach(
+            getEdgeIdsForPath(pathDetailsToAnimate.loopSegment.path).forEach(
                 (id) => persistentLoopEdgeIds.add(id)
             );
         }
 
-        let fullPathDisplay = "";
-        let lastNodeOfPreviousSegment = null;
-        pathDetailsToUse.segments.forEach((segmentPath, index) => {
-            let displaySegment = segmentPath;
+        // Function to generate display HTML for a given path type
+        const generatePathDisplay = (details, title) => {
+            if (!details) return "";
+            let html = "";
+            let fullPathDisplay = "";
+            let lastNodeOfPreviousSegment = null;
+            details.segments.forEach((segmentPath, index) => {
+                let displaySegment = segmentPath;
+                if (
+                    index > 0 &&
+                    segmentPath.length > 0 &&
+                    segmentPath[0] === lastNodeOfPreviousSegment
+                ) {
+                    displaySegment = segmentPath.slice(1);
+                }
+                if (displaySegment.length > 0) {
+                    if (fullPathDisplay !== "") fullPathDisplay += " → ";
+                    fullPathDisplay += formatPathWithIntermediates(
+                        displaySegment,
+                        startNode,
+                        details.permutation
+                    );
+                }
+                if (segmentPath.length > 0)
+                    lastNodeOfPreviousSegment =
+                        segmentPath[segmentPath.length - 1];
+            });
+
+            const pathStepCount = details.segments.reduce(
+                (acc, seg) => acc + (seg.length > 0 ? seg.length - 1 : 0),
+                0
+            );
+            html += `<b>${title} (${pathStepCount} Steps):<br></b>${fullPathDisplay}<br><br>`;
+
+            let loopPathDisplay = "N/A";
             if (
-                index > 0 &&
-                segmentPath.length > 0 &&
-                segmentPath[0] === lastNodeOfPreviousSegment
+                details.loopSegment &&
+                details.loopSegment.path.length > 0 &&
+                details.loopSegment.cost !== Infinity
             ) {
-                displaySegment = segmentPath.slice(1);
-            }
-            if (displaySegment.length > 0) {
-                if (fullPathDisplay !== "") fullPathDisplay += " → ";
-                fullPathDisplay += formatPathWithIntermediates(
-                    displaySegment,
+                const loopTargetsContext = [
+                    details.permutation[0],
+                    details.permutation[details.permutation.length - 1],
+                ];
+                loopPathDisplay = formatPathWithIntermediates(
+                    details.loopSegment.path,
                     startNode,
-                    pathDetailsToUse.permutation
+                    loopTargetsContext,
+                    true
                 );
             }
-            if (segmentPath.length > 0)
-                lastNodeOfPreviousSegment =
-                    segmentPath[segmentPath.length - 1];
+
+            const loopPathStepCount = details.loopSegment
+                ? details.loopSegment.path.length > 0
+                    ? details.loopSegment.path.length - 1
+                    : 0
+                : 0;
+            html += `<b>${title.replace(
+                "Path",
+                "Loop Path"
+            )} (${loopPathStepCount} Steps):<br></b>${loopPathDisplay}<br><br>`;
+            return html;
+        };
+
+        // Always show Optimal Path
+        statusHTML += generatePathDisplay(optimalPathDetails, "Optimal Path");
+
+        // Show Shortest Path only if it's different from Optimal
+        const optimalSignature = JSON.stringify({
+            perm: optimalPathDetails.permutation,
+            cost: optimalPathDetails.totalCost,
         });
+        const shortestSignature =
+            shortestPathDetails &&
+            JSON.stringify({
+                perm: shortestPathDetails.permutation,
+                cost: shortestPathDetails.totalCost,
+            });
 
-        const pathStepCount = pathDetailsToUse.segments.reduce(
-            (acc, seg) => acc + seg.length - 1,
-            0
-        );
-        const pathTitle = isShortestPath ? "Shortest Path" : "Optimal Path";
-        statusHTML += `<b>${pathTitle} (${pathStepCount} Steps):<br></b>${fullPathDisplay}<br><br>`;
-
-        let loopPathDisplay = "N/A";
         if (
-            pathDetailsToUse.loopSegment &&
-            pathDetailsToUse.loopSegment.path.length > 0 &&
-            pathDetailsToUse.loopSegment.cost !== Infinity
+            shortestPathDetails &&
+            optimalSignature !== shortestSignature &&
+            shortestPathDetails.totalCost < optimalPathDetails.totalCost
         ) {
-            const loopTargetsContext = [
-                pathDetailsToUse.permutation[0],
-                pathDetailsToUse.permutation[
-                    pathDetailsToUse.permutation.length - 1
-                ],
-            ];
-            loopPathDisplay = formatPathWithIntermediates(
-                pathDetailsToUse.loopSegment.path,
-                startNode,
-                loopTargetsContext,
-                true
+            statusHTML += generatePathDisplay(
+                shortestPathDetails,
+                "Shortest Path"
             );
         }
 
-        const loopPathStepCount = pathDetailsToUse.loopSegment
-            ? pathDetailsToUse.loopSegment.path.length - 1
-            : 0;
-        const loopTitle = isShortestPath
-            ? "Shortest Loop Path"
-            : "Optimal Loop Path";
-        statusHTML += `<b>${loopTitle} (${loopPathStepCount} Steps):<br></b>${loopPathDisplay}<br><br>`;
-
         await animatePath(
-            pathDetailsToUse.segments,
+            pathDetailsToAnimate.segments,
             NODE_STYLES.PATH_ANIMATION,
             {
                 startNode: startNode,
@@ -758,12 +790,12 @@ async function findPathOptimal(
         );
 
         if (
-            pathDetailsToUse.loopSegment &&
-            pathDetailsToUse.loopSegment.path.length > 0 &&
-            pathDetailsToUse.loopSegment.cost !== Infinity
+            pathDetailsToAnimate.loopSegment &&
+            pathDetailsToAnimate.loopSegment.path.length > 0 &&
+            pathDetailsToAnimate.loopSegment.cost !== Infinity
         ) {
             await animatePath(
-                [pathDetailsToUse.loopSegment.path],
+                [pathDetailsToAnimate.loopSegment.path],
                 NODE_STYLES.LOOP_ANIMATION,
                 {
                     isLoop: true,

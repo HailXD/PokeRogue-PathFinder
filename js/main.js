@@ -321,10 +321,10 @@ function initializeEventListeners() {
         pathfindingMode = pathfindingMode === "optimal" ? "shortest" : "optimal";
         if (pathfindingMode === "shortest") {
             pathToggleButton.classList.add("active");
-            pathToggleButton.textContent = "Show Optimal Path";
+            pathToggleButton.textContent = "Animate Shortest Path";
         } else {
             pathToggleButton.classList.remove("active");
-            pathToggleButton.textContent = "Show Shortest Path";
+            pathToggleButton.textContent = "Animate Optimal Path";
         }
         runPathfinding(true);
     });
