@@ -934,41 +934,77 @@ export async function findPath(
         statusDiv.innerHTML = statusHTML;
         await new Promise((resolve) => setTimeout(resolve, 10));
 
-        const roundTripData = findShortestRoundTripFromNode(
+        const optimalRoundTripData = findShortestRoundTripFromNode(
             startNode,
             avoidNodesSet,
             false
         );
+        const shortestRoundTripData = findShortestRoundTripFromNode(
+            startNode,
+            avoidNodesSet,
+            true
+        );
 
-        if (roundTripData.cost !== Infinity && roundTripData.path.length > 0) {
-            roundTripData.path.forEach((node) => {
-                persistentPathNodeIds.add(node);
-                visitedNodes.add(node);
-            });
-            getEdgeIdsForPath(roundTripData.path).forEach((id) =>
-                persistentLoopEdgeIds.add(id)
-            );
+        const roundTripToAnimate =
+            pathfindingMode === "shortest"
+                ? shortestRoundTripData
+                : optimalRoundTripData;
 
-            const cycleStepCount = roundTripData.path.length - 1;
-            statusHTML += `<br><b>Cycle (${cycleStepCount} Steps):</b> ${formatPathWithIntermediates(
-                roundTripData.path,
+        let pathFound = false;
+        if (
+            optimalRoundTripData.cost !== Infinity &&
+            optimalRoundTripData.path.length > 0
+        ) {
+            pathFound = true;
+            const cycleStepCount = optimalRoundTripData.path.length - 1;
+            statusHTML += `<br><b>Optimal Cycle (${cycleStepCount} Steps):</b> ${formatPathWithIntermediates(
+                optimalRoundTripData.path,
                 startNode,
                 [startNode],
                 true
             )}<br>`;
-            statusHTML += ``;
-            statusDiv.innerHTML = statusHTML;
-            await animatePath(
-                [roundTripData.path],
-                NODE_STYLES.LOOP_ANIMATION,
-                {
-                    isLoop: true,
-                    baseDelay: 50,
-                    startNode: startNode,
-                    targetNodes: styleOptions.allTargetNodes,
-                    pokemonSpawnNodes: styleOptions.pokemonSpawnNodes,
-                }
-            );
+        }
+
+        if (
+            shortestRoundTripData.cost !== Infinity &&
+            shortestRoundTripData.path.length > 0
+        ) {
+            pathFound = true;
+            const cycleStepCount = shortestRoundTripData.path.length - 1;
+            statusHTML += `<br><b>Shortest Cycle (${cycleStepCount} Steps):</b> ${formatPathWithIntermediates(
+                shortestRoundTripData.path,
+                startNode,
+                [startNode],
+                true
+            )}<br>`;
+        }
+
+        if (pathFound) {
+            if (
+                roundTripToAnimate.cost !== Infinity &&
+                roundTripToAnimate.path.length > 0
+            ) {
+                roundTripToAnimate.path.forEach((node) => {
+                    persistentPathNodeIds.add(node);
+                    visitedNodes.add(node);
+                });
+                getEdgeIdsForPath(roundTripToAnimate.path).forEach((id) =>
+                    persistentLoopEdgeIds.add(id)
+                );
+
+                statusDiv.innerHTML = statusHTML;
+                await animatePath(
+                    [roundTripToAnimate.path],
+                    NODE_STYLES.LOOP_ANIMATION,
+                    {
+                        isLoop: true,
+                        baseDelay: 50,
+                        startNode: startNode,
+                        targetNodes: styleOptions.allTargetNodes,
+                        pokemonSpawnNodes: styleOptions.pokemonSpawnNodes,
+                    }
+                );
+            }
         } else {
             statusHTML += `<br>Cannot find a cycle from <span style="font-weight: bold;">${startNode.replace(
                 /_/g,
@@ -976,6 +1012,7 @@ export async function findPath(
             )}</span> via another node.`;
             statusDiv.innerHTML = statusHTML;
         }
+
         statusDiv.innerHTML += INSTRUCTIONAL_TEXT;
         resetGraphStyles();
         return;
