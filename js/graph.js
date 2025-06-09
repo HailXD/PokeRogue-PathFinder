@@ -80,7 +80,7 @@ export function initializeGraph() {
     };
     networkHolder.network = new vis.Network(graphContainer, data, options);
 
-    networkHolder.network.moveTo({offset: { x: 0, y: -120 } });
+    networkHolder.network.moveTo({offset: { x: 0, y: -135 } });
 
     networkHolder.network.on("click", function (params) {
         if (params.nodes.length > 0) {

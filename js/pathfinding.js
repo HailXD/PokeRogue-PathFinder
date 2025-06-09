@@ -160,13 +160,33 @@ function dijkstra(
             const v = edge.to;
             if (avoidNodes.has(v) && v !== endNode) continue;
 
-            const weight = useUnitWeight ? 1 : 1 + (edge.weight - 1) * 50;
-            const alt = distances.get(u) + weight;
+            if (useUnitWeight) {
+                const u_priority = distances.get(u);
+                const u_cost = Math.floor(u_priority / 1000);
+                const u_weighted = u_priority % 1000;
 
-            if (alt < distances.get(v)) {
-                distances.set(v, alt);
-                prevNodes.set(v, u);
-                pq.enqueue(v, alt);
+                const edge_cost = 1;
+                const edge_is_weighted = edge.weight > 1;
+
+                const alt_cost = u_cost + edge_cost;
+                const alt_weighted = u_weighted + (edge_is_weighted ? 1 : 0);
+
+                const alt_priority = alt_cost * 1000 + alt_weighted;
+
+                if (alt_priority < distances.get(v)) {
+                    distances.set(v, alt_priority);
+                    prevNodes.set(v, u);
+                    pq.enqueue(v, alt_priority);
+                }
+            } else {
+                const weight = 1 + (edge.weight - 1) * 50;
+                const alt = distances.get(u) + weight;
+
+                if (alt < distances.get(v)) {
+                    distances.set(v, alt);
+                    prevNodes.set(v, u);
+                    pq.enqueue(v, alt);
+                }
             }
         }
     }
@@ -180,7 +200,8 @@ function dijkstra(
         }
     }
 
-    const cost = distances.get(endNode);
+    let cost = distances.get(endNode);
+
     if (
         cost === Infinity ||
         path.length === 0 ||
