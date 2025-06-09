@@ -179,13 +179,22 @@ function dijkstra(
                     pq.enqueue(v, alt_priority);
                 }
             } else {
-                const weight = 1 + (edge.weight - 1) * 50;
-                const alt = distances.get(u) + weight;
+                const u_priority = distances.get(u);
+                const u_weighted = Math.floor(u_priority / 1000);
+                const u_steps = u_priority % 1000;
 
-                if (alt < distances.get(v)) {
-                    distances.set(v, alt);
+                const edge_is_weighted = edge.weight > 1;
+                const edge_steps = 1;
+
+                const alt_weighted = u_weighted + (edge_is_weighted ? 1 : 0);
+                const alt_steps = u_steps + edge_steps;
+
+                const alt_priority = alt_weighted * 1000 + alt_steps;
+
+                if (alt_priority < distances.get(v)) {
+                    distances.set(v, alt_priority);
                     prevNodes.set(v, u);
-                    pq.enqueue(v, alt);
+                    pq.enqueue(v, alt_priority);
                 }
             }
         }
