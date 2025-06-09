@@ -26,7 +26,7 @@ export let biomePokemonSpawns = new Map();
 export const networkHolder = { network: null };
 export let nodes = new vis.DataSet();
 export const edges = new vis.DataSet();
-export let pathfindingMode = "optimal";
+export let pathfindingMode = "shortest";
 
 export const NODE_STYLES = {
     DEFAULT: {
@@ -243,6 +243,7 @@ function initializeEventListeners() {
     );
     const resetButton = document.getElementById("resetButton");
     const pathToggleButton = document.getElementById("path-toggle");
+    pathToggleButton.classList.add("active");
 
     biomeNamesSorted.forEach((biome) => {
         const option = new Option(biome.replace(/_/g, " "), biome);
@@ -317,12 +318,12 @@ function initializeEventListeners() {
     pathToggleButton.addEventListener("click", () => {
         pathfindingMode =
             pathfindingMode === "optimal" ? "shortest" : "optimal";
-        if (pathfindingMode === "shortest") {
-            pathToggleButton.classList.add("active");
-            pathToggleButton.textContent = "Showing Shortest Path";
-        } else {
+        if (pathfindingMode === "optimal") {
             pathToggleButton.classList.remove("active");
             pathToggleButton.textContent = "Showing Optimal Path";
+        } else {
+            pathToggleButton.classList.add("active");
+            pathToggleButton.textContent = "Showing Shortest Path";
         }
         runPathfinding(true);
     });

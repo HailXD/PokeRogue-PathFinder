@@ -26,7 +26,7 @@ function generateQueryKey(startNode, targetNodes, avoidNodesSet) {
 
 const INSTRUCTIONAL_TEXT = `
     <hr style="border-top: 1px solid #ccc; margin: 10px 0;"><br>
-    Select <span class="highlight-key">biomes</span> to find the optimal path.<br />
+    Select <span class="highlight-key">biomes</span> to find the shortest path.<br />
     <span class="highlight-key">Click</span> on a biome to see
     list full list of spawn.<br />
     <span class="highlight-key">Right-click</span> a biome to set
@@ -508,7 +508,7 @@ async function findPathOptimal(
     const shortestPathCache = new Map();
     const nodesForPathCalc = [startNode, ...effectiveTargetNodes];
 
-    statusHTML += "Finding optimal path...<br>";
+    statusHTML += "Finding shortest path...<br>";
     statusDiv.innerHTML = statusHTML;
     await new Promise((resolve) => setTimeout(resolve, 10));
 
@@ -542,7 +542,7 @@ async function findPathOptimal(
             findNearestNeighborPath(startNode, effectiveTargetNodes, pathCache),
         ];
     } else {
-        statusHTML += `Finding optimal path for ${effectiveTargetNodes.length} targets...<br>`;
+        statusHTML += `Finding shortest path for ${effectiveTargetNodes.length} targets...<br>`;
         permutations = getPermutations(effectiveTargetNodes);
     }
     statusDiv.innerHTML = statusHTML;
@@ -831,7 +831,7 @@ export async function findPath(
     avoidNodesSet,
     pokemonSpawnNodes,
     allTargetNodes,
-    pathfindingMode = "optimal"
+    pathfindingMode = "shortest"
 ) {
     const statusDiv = document.getElementById("status");
     const queryKey = generateQueryKey(
