@@ -52,17 +52,16 @@
                 <h1>Hail's Map</h1>
 
                 <div id="status" class="status">
-                    Select <span class="highlight-key">biomes</span> or
-                    <span class="pokemon">biomes</span> to find the shortest
-                    path.<br />
+                    Select <span class="highlight-key">Pokemon</span> or
+                    <span class="highlight-key">Biomes</span> to find paths<br />
                     <span class="highlight-key">Click</span> on a biome to see
-                    list full list of spawn.<br />
+                    list full list of spawn<br />
                     <span class="highlight-key">Right-click</span> a biome to
-                    set it as the start biome.<br />
+                    set it as the start biome<br />
                     <span class="highlight-key">Search</span> for Pokemon to
-                    highlight their biomes.<br />
+                    highlight their biomes<br />
                     <span class="highlight-key">Hover</span> on highlighted to
-                    view selected Pokemon.<br />
+                    view selected Pokemon<br />
                 </div>
                 <div class="graph-toggle-container">
                     <button id="path-toggle" class="button">
@@ -149,22 +148,11 @@
 
             <div class="graph-panel">
                 <div class="graph-info">
-                    Some routes are not guaranteed to appear.
-                    <br /><span class="highlight-key">Optimal path</span> shows
-                    the highest probability route to take. (Avoids Probability
-                    Paths) <br /><span class="highlight-orange"
-                        >Shortest path</span
-                    >
-                    does not take into account probability of paths appearing
-                    and is the most direct route to take. <br />If you do get
-                    side tracked,
-                    <span class="highlight-key">Right-click</span> where you are
-                    now at and the map will be updated. <br />You can toggle
-                    between which path is shown on the graph by clicking on the
-                    <span class="highlight-key">Showing Shortest Path</span> or
-                    <span class="highlight-orange">Showing Optimal Path</span>
-                    button. <br />Paths that have probabilities of appearing are
-                    highlighted in <span class="highlight-orange">Orange</span>.
+                    - Paths in <span class="highlight-orange">Orange</span> are not guaranteed to appear<br />
+                    - <span class="highlight-key">Optimal Path:</span> Highest probability route<br />
+                    - <span class="highlight-orange">Shortest Path:</span> Most direct route<br />
+                    - If sidetracked, <span class="highlight-key">Right-click</span> your current biome to update the path<br />
+                    - Use the <span class="highlight-key">Showing Optimal Path</span> or <span class="highlight-orange">Showing Shortest Path</span> button to toggle between graph types
                 </div>
                 <div id="graph-container" style="flex-grow: 1"></div>
             </div>
