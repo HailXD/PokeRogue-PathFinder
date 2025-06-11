@@ -66,6 +66,141 @@ export const NODE_STYLES = {
     LOOP_ANIMATION: { background: "#97C2FC", border: "black", borderWidth: 3 },
 };
 
+const pokemonNamesSorted = () => Object.keys(allPokemonData).sort();
+
+export function updateURLParameters() {
+    const params = new URLSearchParams();
+
+    const pokemonIndices = Array.from(selectedPokemon)
+        .map((p) => pokemonNamesSorted().indexOf(p))
+        .filter((i) => i !== -1);
+    if (pokemonIndices.length > 0) {
+        params.set("P", JSON.stringify(pokemonIndices));
+    }
+
+    const targetIndices = Array.from(selectedTargetBiomes)
+        .map((b) => biomeNamesSorted.indexOf(b))
+        .filter((i) => i !== -1);
+    if (targetIndices.length > 0) {
+        params.set("T", JSON.stringify(targetIndices));
+    }
+
+    const avoidIndices = Array.from(selectedAvoidBiomes)
+        .map((b) => biomeNamesSorted.indexOf(b))
+        .filter((i) => i !== -1);
+    if (avoidIndices.length > 0) {
+        params.set("A", JSON.stringify(avoidIndices));
+    }
+
+    const startBiomeIndex = biomeNamesSorted.indexOf(startBiomeSelect.value);
+    if (startBiomeIndex !== -1 && startBiomeSelect.value !== BiomeId.TOWN) {
+        params.set("S", startBiomeIndex);
+    }
+
+    const queryString = params.toString();
+    if (window.history.pushState) {
+        const newURL = `${window.location.protocol}//${window.location.host}${
+            window.location.pathname
+        }${queryString ? `?${queryString}` : ""}`;
+        window.history.pushState({ path: newURL }, "", newURL);
+    }
+}
+
+function applyURLParameters() {
+    const params = new URLSearchParams(window.location.search);
+    const pokemonIndicesParam = params.get("P");
+    const targetIndicesParam = params.get("T");
+    const avoidIndicesParam = params.get("A");
+    const startBiomeIndexParam = params.get("S");
+
+    const hasParams =
+        pokemonIndicesParam ||
+        targetIndicesParam ||
+        avoidIndicesParam ||
+        startBiomeIndexParam;
+
+    if (!hasParams) {
+        runPathfinding(true);
+        return;
+    }
+
+    const allPokemonNames = pokemonNamesSorted();
+
+    if (pokemonIndicesParam) {
+        try {
+            const pokemonIndices = JSON.parse(pokemonIndicesParam);
+            pokemonIndices.forEach((index) => {
+                if (allPokemonNames[index]) {
+                    selectedPokemon.add(allPokemonNames[index]);
+                }
+            });
+        } catch (e) {
+            console.error("Error parsing P parameter", e);
+        }
+    }
+
+    if (targetIndicesParam) {
+        try {
+            const targetIndices = JSON.parse(targetIndicesParam);
+            targetIndices.forEach((index) => {
+                if (biomeNamesSorted[index]) {
+                    selectedTargetBiomes.add(biomeNamesSorted[index]);
+                }
+            });
+        } catch (e) {
+            console.error("Error parsing T parameter", e);
+        }
+    }
+
+    if (avoidIndicesParam) {
+        try {
+            const avoidIndices = JSON.parse(avoidIndicesParam);
+            avoidIndices.forEach((index) => {
+                if (biomeNamesSorted[index]) {
+                    selectedAvoidBiomes.add(biomeNamesSorted[index]);
+                }
+            });
+        } catch (e) {
+            console.error("Error parsing A parameter", e);
+        }
+    }
+
+    if (startBiomeIndexParam) {
+        const startBiome = biomeNamesSorted[parseInt(startBiomeIndexParam, 10)];
+        if (startBiome) {
+            startBiomeSelect.value = startBiome;
+        }
+    }
+
+    document
+        .querySelectorAll("#pokemonListContainer .multi-select-item")
+        .forEach((item) => {
+            if (selectedPokemon.has(item.dataset.value)) {
+                item.classList.add("selected");
+            }
+        });
+    handlePokemonSelectionChange();
+
+    const includePokemonInTarget = document.getElementById(
+        "includePokemonInTarget"
+    );
+    createMultiSelectItems(
+        "targetBiomesContainer",
+        selectedTargetBiomes,
+        "selectedTargetsIndicator",
+        { pokemonBiomes, includePokemonInTarget },
+        true
+    );
+    createMultiSelectItems(
+        "avoidBiomesContainer",
+        selectedAvoidBiomes,
+        "selectedAvoidIndicator"
+    );
+
+    updateAllNodeStyles();
+    runPathfinding(true);
+}
+
 export function updateAllNodeStyles() {
     const pokemonSpawnBiomes = pokemonBiomes;
 
@@ -354,6 +489,7 @@ function initializeEventListeners() {
         );
         updateAllNodeStyles();
         runPathfinding(true);
+        updateURLParameters();
     });
 }
 
@@ -387,6 +523,8 @@ export async function runPathfinding(forceRecalculate = false) {
         selectedTargetBiomes,
         pathfindingMode
     );
+
+    updateURLParameters();
 }
 
 async function initializeApp() {
@@ -417,6 +555,7 @@ async function initializeApp() {
         initializeModal();
         initializeGraph();
         resetGraphStyles();
+        applyURLParameters();
     } catch (error) {
         console.error("Could not load Pokémon data:", error);
         document.getElementById("pokemonListContainer").innerHTML =
