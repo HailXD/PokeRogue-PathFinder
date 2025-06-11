@@ -3,6 +3,7 @@ import {
     createMultiSelectItems,
     updateSelectedIndicator,
     populatePokemonList,
+    populateAvoidTypesList,
     handleSearch,
     initializeModal,
     applyTheme,
@@ -16,12 +17,17 @@ export const startBiomeSelect = document.getElementById("startBiome");
 export const selectedTargetBiomes = new Set();
 export const selectedAvoidBiomes = new Set();
 export const selectedPokemon = new Set();
+export const selectedAvoidTypes = new Set();
 export const pokemonBiomes = new Set();
 export let persistentPathNodeIds = new Set();
 export let persistentPathEdgeIds = new Set();
 export let persistentLoopEdgeIds = new Set();
 export let visitedNodes = new Set();
 export let allPokemonData = {};
+export let pokemonTypes = {};
+export let allTypes = [];
+export let typePokemonMap = new Map();
+export let pokemonBiomeMap = new Map();
 export let biomePokemonSpawns = new Map();
 export const networkHolder = { network: null };
 export let nodes = new vis.DataSet();
@@ -376,6 +382,10 @@ function initializeEventListeners() {
     const includePokemonInTarget = document.getElementById(
         "includePokemonInTarget"
     );
+    const avoidTypesSearchInput = document.getElementById("avoidTypesSearch");
+    const avoidTypesListContainer = document.getElementById(
+        "avoidTypesListContainer"
+    );
     const resetButton = document.getElementById("resetButton");
     const pathToggleButton = document.getElementById("path-toggle");
     pathToggleButton.classList.add("active");
@@ -430,6 +440,25 @@ function initializeEventListeners() {
         handleSearch(avoidBiomeSearchInput, avoidBiomesContainer)
     );
 
+    avoidTypesSearchInput.addEventListener("input", () => {
+        handleSearch(avoidTypesSearchInput, avoidTypesListContainer);
+    });
+
+    avoidTypesListContainer.addEventListener("click", (event) => {
+        const item = event.target.closest(".multi-select-item");
+        if (item) {
+            const type = item.dataset.value;
+            if (selectedAvoidTypes.has(type)) {
+                selectedAvoidTypes.delete(type);
+                item.classList.remove("selected");
+            } else {
+                selectedAvoidTypes.add(type);
+                item.classList.add("selected");
+            }
+            handleAvoidTypeSelectionChange();
+        }
+    });
+
     pokemonListContainer.addEventListener("click", (event) => {
         const item = event.target.closest(".multi-select-item");
         if (item) {
@@ -472,6 +501,7 @@ function initializeEventListeners() {
         selectedPokemon.clear();
         selectedTargetBiomes.clear();
         selectedAvoidBiomes.clear();
+        selectedAvoidTypes.clear();
 
         document
             .querySelectorAll(".multi-select-item.selected")
@@ -486,6 +516,11 @@ function initializeEventListeners() {
             selectedAvoidBiomes,
             document.getElementById("selectedAvoidIndicator"),
             "avoidBiomesContainer"
+        );
+        updateSelectedIndicator(
+            selectedAvoidTypes,
+            document.getElementById("selectedAvoidTypesIndicator"),
+            "avoidTypesListContainer"
         );
         updateAllNodeStyles();
         runPathfinding(true);
@@ -527,18 +562,91 @@ export async function runPathfinding(forceRecalculate = false) {
     updateURLParameters();
 }
 
+export function handleAvoidTypeSelectionChange() {
+    const selectedAvoidTypesIndicator = document.getElementById(
+        "selectedAvoidTypesIndicator"
+    );
+
+    const pokemonToAvoid = new Set();
+    for (const type of selectedAvoidTypes) {
+        const pokemonOfType = typePokemonMap.get(type) || [];
+        for (const pokemon of pokemonOfType) {
+            pokemonToAvoid.add(pokemon);
+        }
+    }
+
+    const biomesToAvoid = new Set();
+    for (const pokemon of pokemonToAvoid) {
+        const biomes = pokemonBiomeMap.get(pokemon) || [];
+        for (const biome of biomes) {
+            biomesToAvoid.add(biome);
+        }
+    }
+
+    document
+        .querySelectorAll("#avoidBiomesContainer .multi-select-item")
+        .forEach((item) => {
+            if (
+                biomesToAvoid.has(item.dataset.value) &&
+                !selectedAvoidBiomes.has(item.dataset.value)
+            ) {
+                selectedAvoidBiomes.add(item.dataset.value);
+                item.classList.add("selected");
+            }
+        });
+
+    updateSelectedIndicator(
+        selectedAvoidTypes,
+        selectedAvoidTypesIndicator,
+        "avoidTypesListContainer"
+    );
+    updateSelectedIndicator(
+        selectedAvoidBiomes,
+        document.getElementById("selectedAvoidIndicator"),
+        "avoidBiomesContainer"
+    );
+    updateAllNodeStyles();
+    runPathfinding(true);
+}
+
 async function initializeApp() {
     const savedTheme = localStorage.getItem("theme") || "dark";
     applyTheme(savedTheme);
 
     try {
-        const response = await fetch("pokemon_spawn.json");
-        if (!response.ok)
-            throw new Error(`HTTP error! status: ${response.status}`);
-        allPokemonData = await response.json();
+        const [spawnResponse, typesResponse] = await Promise.all([
+            fetch("pokemon_spawn.json"),
+            fetch("pokemon_types.json"),
+        ]);
+
+        if (!spawnResponse.ok)
+            throw new Error(
+                `HTTP error! status: ${spawnResponse.status} for pokemon_spawn.json`
+            );
+        if (!typesResponse.ok)
+            throw new Error(
+                `HTTP error! status: ${typesResponse.status} for pokemon_types.json`
+            );
+
+        allPokemonData = await spawnResponse.json();
+        pokemonTypes = await typesResponse.json();
+
+        const types = new Set();
+        for (const pokemonName in pokemonTypes) {
+            const pkmnTypes = pokemonTypes[pokemonName];
+            pkmnTypes.forEach((type) => {
+                types.add(type);
+                if (!typePokemonMap.has(type)) {
+                    typePokemonMap.set(type, []);
+                }
+                typePokemonMap.get(type).push(pokemonName);
+            });
+        }
+        allTypes = Array.from(types).sort();
 
         for (const pokemonName in allPokemonData) {
             const spawns = allPokemonData[pokemonName];
+            const biomeSet = new Set();
             spawns.forEach((spawnInfo) => {
                 const [biome, rarity, time] = spawnInfo;
                 if (!biomePokemonSpawns.has(biome)) {
@@ -547,10 +655,13 @@ async function initializeApp() {
                 biomePokemonSpawns
                     .get(biome)
                     .push({ pokemonName, rarity, time });
+                biomeSet.add(biome);
             });
+            pokemonBiomeMap.set(pokemonName, Array.from(biomeSet));
         }
 
         populatePokemonList();
+        populateAvoidTypesList();
         initializeEventListeners();
         initializeModal();
         initializeGraph();

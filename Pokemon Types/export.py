@@ -41,13 +41,11 @@ def parse_pokemon_species_file(input_filename="pokemon-species.ts", output_filen
     for match in matches:
         species_raw, type1_raw, type2_raw = match
 
-        species_name = species_raw.replace('_', ' ').title()
-
         types = [type1_raw.title()]
         if type2_raw:
             types.append(type2_raw.title())
 
-        pokemon_types[species_name] = types
+        pokemon_types[species_raw] = types
         
     with open(output_filename, 'w', encoding='utf-8') as f:
         json.dump(pokemon_types, f)
