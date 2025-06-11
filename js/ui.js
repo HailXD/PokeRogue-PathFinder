@@ -3,11 +3,8 @@ import {
     selectedTargetBiomes,
     selectedAvoidBiomes,
     selectedPokemon,
-    selectedAvoidTypes,
     startBiomeSelect,
     allPokemonData,
-    allTypes,
-    pokemonBiomeMap,
     biomePokemonSpawns,
     nodes,
     updateAllNodeStyles,
@@ -81,8 +78,6 @@ export function createMultiSelectItems(
                 item.classList.remove("selected");
                 if (isTarget) {
                     item.classList.remove("user-selected");
-                } else if (containerId === "avoidBiomesContainer") {
-                    item.classList.remove("user-selected");
                 }
                 changed = true;
             } else {
@@ -95,7 +90,7 @@ export function createMultiSelectItems(
                 }
                 selectedSet.add(biomeValue);
                 item.classList.add("selected");
-                if (isTarget || containerId === "avoidBiomesContainer") {
+                if (isTarget) {
                     item.classList.add("user-selected");
                 }
                 changed = true;
@@ -143,10 +138,8 @@ export function createMultiSelectItems(
                         "#avoidBiomesContainer .multi-select-item"
                     )
                     .forEach((aItem) => {
-                        if (aItem.dataset.value === biomeValue) {
+                        if (aItem.dataset.value === biomeValue)
                             aItem.classList.remove("selected");
-                            aItem.classList.remove("user-selected");
-                        }
                     });
                 updateSelectedIndicator(
                     selectedAvoidBiomes,
@@ -215,10 +208,7 @@ export function updateSelectedIndicator(
                     );
                     if (itemInList) {
                         itemInList.classList.remove("selected");
-                        if (
-                            listContainerId === "targetBiomesContainer" ||
-                            listContainerId === "avoidBiomesContainer"
-                        ) {
+                        if (listContainerId === "targetBiomesContainer") {
                             itemInList.classList.remove("user-selected");
                         }
                     }
@@ -320,37 +310,6 @@ export function populatePokemonList() {
 
         pokemonListContainer.appendChild(item);
     });
-}
-
-export function populateAvoidTypesList() {
-    const avoidTypesListContainer = document.getElementById(
-        "avoidTypesListContainer"
-    );
-    const selectedAvoidTypesIndicator = document.getElementById(
-        "selectedAvoidTypesIndicator"
-    );
-    avoidTypesListContainer.innerHTML = "";
-
-    allTypes.forEach((type) => {
-        const item = document.createElement("div");
-        const itemText = type.replace(/_/g, " ");
-        item.classList.add("multi-select-item");
-        item.textContent = itemText;
-        item.dataset.value = type;
-        item.dataset.originalText = itemText;
-
-        if (selectedAvoidTypes.has(type)) {
-            item.classList.add("selected");
-        }
-
-        avoidTypesListContainer.appendChild(item);
-    });
-
-    updateSelectedIndicator(
-        selectedAvoidTypes,
-        selectedAvoidTypesIndicator,
-        "avoidTypesListContainer"
-    );
 }
 
 export function handleSearch(searchInput, container) {
